@@ -57,6 +57,7 @@ export async function PUT(
     
     const updatedProduct: Product = {
       ...products[index],
+      productCode: body.productCode ?? products[index].productCode ?? '',
       name: body.name ?? products[index].name,
       description: body.description ?? products[index].description,
       price: body.price !== undefined ? Number(body.price) : products[index].price,

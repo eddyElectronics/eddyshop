@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     
     const newProduct: Product = {
       id: Date.now().toString(),
+      productCode: body.productCode || '',
       name: body.name,
       description: body.description,
       price: Number(body.price),
