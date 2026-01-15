@@ -6,8 +6,6 @@ import { useCart } from '@/lib/cart-context';
 import { Product } from '@/lib/products';
 import { Category } from '@/lib/categories';
 
-type View = 'home' | 'products' | 'cart';
-
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('th-TH', {
     style: 'currency',
@@ -21,13 +19,11 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentView, setCurrentView] = useState<View>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const { items, addItem, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
+  const { addItem } = useCart();
 
   const productsRef = useRef<HTMLElement>(null);
-  const cartRef = useRef<HTMLElement>(null);
 
   // Fetch data
   useEffect(() => {
@@ -67,13 +63,7 @@ export default function Home() {
 
   const handleViewProducts = (category?: string) => {
     if (category) setSelectedCategory(category);
-    setCurrentView('products');
     setTimeout(() => scrollToSection(productsRef), 100);
-  };
-
-  const handleViewCart = () => {
-    setCurrentView('cart');
-    setTimeout(() => scrollToSection(cartRef), 100);
   };
 
   // Product Modal
@@ -212,35 +202,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Floating Navigation */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white dark:bg-zinc-900 rounded-full shadow-lg border border-zinc-200 dark:border-zinc-700 px-2 py-2">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => { setCurrentView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${currentView === 'home' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-          >
-            🏠 หน้าหลัก
-          </button>
-          <button
-            onClick={() => handleViewProducts()}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${currentView === 'products' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-          >
-            📦 สินค้า
-          </button>
-          <button
-            onClick={handleViewCart}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors relative ${currentView === 'cart' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-          >
-            🛒 ตะกร้า
-            {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                {totalItems}
-              </span>
-            )}
-          </button>
-        </div>
-      </nav>
-
       {/* Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
@@ -318,106 +279,10 @@ export default function Home() {
         )}
       </section>
 
-      {/* Cart Section */}
-      <section ref={cartRef} id="cart" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-4">
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
-          🛒 ตะกร้าสินค้า
-        </h2>
-        
-        {items.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900 rounded-xl p-12 text-center border border-zinc-200 dark:border-zinc-700">
-            <div className="text-6xl mb-4">🛒</div>
-            <p className="text-zinc-500 dark:text-zinc-400 mb-4">ตะกร้าของคุณว่างเปล่า</p>
-            <button
-              onClick={() => handleViewProducts()}
-              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-            >
-              เลือกซื้อสินค้า
-            </button>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {items.map((item) => {
-                const imageUrl = item.images?.[0] || item.image || '/images/products/placeholder.jpg';
-                return (
-                  <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-xl p-4 flex gap-4 border border-zinc-200 dark:border-zinc-700">
-                    <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-100">
-                      <Image src={imageUrl} alt={item.name} fill className="object-cover" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-zinc-900 dark:text-white">{item.name}</h3>
-                      <p className="text-sm text-zinc-500">{item.category}</p>
-                      <p className="text-blue-600 font-bold mt-1">{formatPrice(item.price)}</p>
-                    </div>
-                    <div className="flex flex-col items-end justify-between">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-zinc-400 hover:text-red-500 transition-colors"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Summary */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 h-fit border border-zinc-200 dark:border-zinc-700 sticky top-4">
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">สรุปคำสั่งซื้อ</h3>
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                  <span>สินค้า ({totalItems} ชิ้น)</span>
-                  <span>{formatPrice(totalPrice)}</span>
-                </div>
-                <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                  <span>ค่าจัดส่ง</span>
-                  <span>{totalPrice >= 1000 ? 'ฟรี' : formatPrice(50)}</span>
-                </div>
-                <hr className="border-zinc-200 dark:border-zinc-700" />
-                <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white">
-                  <span>รวมทั้งหมด</span>
-                  <span className="text-blue-600">{formatPrice(totalPrice + (totalPrice >= 1000 ? 0 : 50))}</span>
-                </div>
-              </div>
-              <button className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors">
-                ดำเนินการสั่งซื้อ
-              </button>
-              {totalPrice < 1000 && (
-                <p className="text-sm text-zinc-500 text-center mt-3">
-                  ซื้อเพิ่มอีก {formatPrice(1000 - totalPrice)} เพื่อรับส่งฟรี!
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </section>
-
       {/* Product Modal */}
       {selectedProduct && (
         <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
-      {/* Footer spacer for floating nav */}
-      <div className="h-24"></div>
     </div>
   );
 }
