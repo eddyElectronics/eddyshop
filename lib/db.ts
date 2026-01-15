@@ -1,46 +1,42 @@
-import { kv } from '@vercel/kv';
 import { Product } from './products';
 import { Category } from './categories';
 import fs from 'fs';
 import path from 'path';
 
-const PRODUCTS_KEY = 'products';
-const CATEGORIES_KEY = 'categories';
-
-// ตรวจสอบว่าอยู่ใน production หรือไม่
-const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+// In-memory storage for production (since Vercel serverless doesn't persist files)
+let productsCache: Product[] | null = null;
+let categoriesCache: Category[] | null = null;
 
 // ===== PRODUCTS =====
 
 export async function getProducts(): Promise<Product[]> {
-  if (isProduction) {
-    try {
-      const products = await kv.get<Product[]>(PRODUCTS_KEY);
-      return products || [];
-    } catch (error) {
-      console.error('KV get products error:', error);
-      return [];
-    }
-  } else {
-    // Development - ใช้ JSON file
+  // Return from cache if available
+  if (productsCache !== null) {
+    return productsCache;
+  }
+  
+  try {
     const filePath = path.join(process.cwd(), 'data', 'products.json');
     const fileContents = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContents);
+    const products = JSON.parse(fileContents);
+    productsCache = products;
+    return products;
+  } catch (error) {
+    console.error('Read products error:', error);
+    return [];
   }
 }
 
 export async function saveProducts(products: Product[]): Promise<void> {
-  if (isProduction) {
-    try {
-      await kv.set(PRODUCTS_KEY, products);
-    } catch (error) {
-      console.error('KV set products error:', error);
-      throw error;
-    }
-  } else {
-    // Development - ใช้ JSON file
+  // Update cache
+  productsCache = products;
+  
+  try {
     const filePath = path.join(process.cwd(), 'data', 'products.json');
     fs.writeFileSync(filePath, JSON.stringify(products, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Save products error:', error);
+    // In serverless, file write may fail but cache still works
   }
 }
 
@@ -85,34 +81,33 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ===== CATEGORIES =====
 
 export async function getCategories(): Promise<Category[]> {
-  if (isProduction) {
-    try {
-      const categories = await kv.get<Category[]>(CATEGORIES_KEY);
-      return categories || [];
-    } catch (error) {
-      console.error('KV get categories error:', error);
-      return [];
-    }
-  } else {
-    // Development - ใช้ JSON file
+  // Return from cache if available
+  if (categoriesCache !== null) {
+    return categoriesCache;
+  }
+  
+  try {
     const filePath = path.join(process.cwd(), 'data', 'categories.json');
     const fileContents = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContents);
+    const categories = JSON.parse(fileContents);
+    categoriesCache = categories;
+    return categories;
+  } catch (error) {
+    console.error('Read categories error:', error);
+    return [];
   }
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
-  if (isProduction) {
-    try {
-      await kv.set(CATEGORIES_KEY, categories);
-    } catch (error) {
-      console.error('KV set categories error:', error);
-      throw error;
-    }
-  } else {
-    // Development - ใช้ JSON file
+  // Update cache
+  categoriesCache = categories;
+  
+  try {
     const filePath = path.join(process.cwd(), 'data', 'categories.json');
     fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Save categories error:', error);
+    // In serverless, file write may fail but cache still works
   }
 }
 
@@ -152,35 +147,4 @@ export async function deleteCategory(id: string): Promise<boolean> {
   categories.splice(index, 1);
   await saveCategories(categories);
   return true;
-}
-
-// ===== INIT DATA =====
-// ใช้สำหรับ migrate ข้อมูลจาก JSON ไป KV ครั้งแรก
-export async function initializeData(): Promise<void> {
-  if (!isProduction) return;
-  
-  try {
-    // ตรวจสอบว่ามีข้อมูลใน KV หรือยัง
-    const existingProducts = await kv.get<Product[]>(PRODUCTS_KEY);
-    
-    if (!existingProducts || existingProducts.length === 0) {
-      // อ่านจาก JSON และบันทึกลง KV
-      const productsPath = path.join(process.cwd(), 'data', 'products.json');
-      const categoriesPath = path.join(process.cwd(), 'data', 'categories.json');
-      
-      if (fs.existsSync(productsPath)) {
-        const products = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
-        await kv.set(PRODUCTS_KEY, products);
-        console.log('Initialized products in KV');
-      }
-      
-      if (fs.existsSync(categoriesPath)) {
-        const categories = JSON.parse(fs.readFileSync(categoriesPath, 'utf8'));
-        await kv.set(CATEGORIES_KEY, categories);
-        console.log('Initialized categories in KV');
-      }
-    }
-  } catch (error) {
-    console.error('Initialize data error:', error);
-  }
 }
