@@ -1,49 +1,32 @@
 [
   {
-    "id": "3",
-    "productCode": "SH1",
-    "name": "รองเท้าผ้าใบ Casual",
-    "description": "รองเท้าผ้าใบสไตล์ลำลอง พื้นนุ่ม เดินสบาย",
-    "price": 1290,
-    "category": "รองเท้า",
-    "image": "/images/products/shoes-1.jpg",
-    "stock": 25,
-    "featured": true
-  },
-  {
-    "id": "4",
-    "productCode": "BG1",
-    "name": "กระเป๋าสะพายข้าง",
-    "description": "กระเป๋าสะพายข้างหนัง PU คุณภาพดี ใส่ของได้เยอะ",
-    "price": 650,
-    "category": "กระเป๋า",
-    "image": "/images/products/bag-1.jpg",
-    "stock": 40,
-    "featured": false
-  },
-  {
-    "id": "5",
-    "productCode": "WT1",
-    "name": "นาฬิกาข้อมือ Classic",
-    "description": "นาฬิกาข้อมือดีไซน์คลาสสิค สายหนังแท้ กันน้ำ",
-    "price": 2490,
-    "category": "เครื่องประดับ",
-    "image": "/images/products/watch-1.jpg",
-    "stock": 15,
-    "featured": true
-  },
-  {
-    "id": "1768445091405",
-    "productCode": "MB1",
-    "name": "IC28A",
-    "description": "IC28A",
-    "price": 15000,
+    "id": "1768459205252",
+    "productCode": "AAA",
+    "name": "aaa",
+    "description": "aaaa",
+    "price": 100,
     "category": "โมบาย",
-    "image": "/images/products/placeholder.jpg",
+    "image": "/images/products/1768459205158-1qe4u6.png",
     "images": [
-      "/images/products/placeholder.jpg"
+      "/images/products/1768459205158-1qe4u6.png",
+      "/images/products/1768459220261-a6guqd.png",
+      "/images/products/1768459220265-34nk4u.png"
     ],
-    "stock": 1,
-    "featured": false
+    "featured": false,
+    "isUsed": true
+  },
+  {
+    "id": "1768459425124",
+    "productCode": "SSS",
+    "name": "dddd",
+    "description": "fsfsdf",
+    "price": 100,
+    "category": "มือถือ",
+    "image": "/images/products/1768459425096-i3dxts.png",
+    "images": [
+      "/images/products/1768459425096-i3dxts.png"
+    ],
+    "featured": false,
+    "isUsed": true
   }
 ]

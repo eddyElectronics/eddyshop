@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import fs from 'fs';
+import path from 'path';
+
+const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
 // POST - อัพโหลดรูปภาพ
 export async function POST(request: NextRequest) {
   try {
-    // ตรวจสอบ BLOB token
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error('BLOB_READ_WRITE_TOKEN is not set');
-      return NextResponse.json({ error: 'Storage not configured. Please set BLOB_READ_WRITE_TOKEN.' }, { status: 500 });
-    }
-
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     
@@ -33,14 +31,34 @@ export async function POST(request: NextRequest) {
 
       // สร้างชื่อไฟล์ unique
       const ext = file.name.split('.').pop();
-      const uniqueName = `products/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
-      
-      // อัพโหลดไปยัง Vercel Blob
-      const blob = await put(uniqueName, file, {
-        access: 'public',
-      });
-      
-      uploadedPaths.push(blob.url);
+      const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+      if (isProduction) {
+        // Production - ใช้ Vercel Blob
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+          return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+        }
+        
+        const blob = await put(`products/${uniqueName}`, file, {
+          access: 'public',
+        });
+        uploadedPaths.push(blob.url);
+      } else {
+        // Development - ใช้ local file system
+        const uploadDir = path.join(process.cwd(), 'public', 'images', 'products');
+        
+        // สร้างโฟลเดอร์ถ้ายังไม่มี
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        const filePath = path.join(uploadDir, uniqueName);
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        fs.writeFileSync(filePath, buffer);
+        
+        uploadedPaths.push(`/images/products/${uniqueName}`);
+      }
     }
 
     return NextResponse.json({ 
