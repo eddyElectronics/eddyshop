@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getProductById, getProducts, saveProducts } from '@/lib/db';
 import { Product } from '@/lib/products';
-
-const dataFilePath = path.join(process.cwd(), 'data', 'products.json');
-
-function readProducts(): Product[] {
-  const fileContents = fs.readFileSync(dataFilePath, 'utf8');
-  return JSON.parse(fileContents);
-}
-
-function writeProducts(products: Product[]): void {
-  fs.writeFileSync(dataFilePath, JSON.stringify(products, null, 2), 'utf8');
-}
 
 // GET - ดึงสินค้าตาม ID
 export async function GET(
@@ -21,8 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const products = readProducts();
-    const product = products.find(p => p.id === id);
+    const product = await getProductById(id);
     
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -30,6 +17,7 @@ export async function GET(
     
     return NextResponse.json(product);
   } catch (error) {
+    console.error('GET product error:', error);
     return NextResponse.json({ error: 'Failed to read product' }, { status: 500 });
   }
 }
@@ -42,7 +30,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const products = readProducts();
+    const products = await getProducts();
     const index = products.findIndex(p => p.id === id);
     
     if (index === -1) {
@@ -70,10 +58,11 @@ export async function PUT(
     };
     
     products[index] = updatedProduct;
-    writeProducts(products);
+    await saveProducts(products);
     
     return NextResponse.json(updatedProduct);
   } catch (error) {
+    console.error('PUT product error:', error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
@@ -85,18 +74,19 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const products = readProducts();
+    const products = await getProducts();
     const index = products.findIndex(p => p.id === id);
     
     if (index === -1) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     
-    const deletedProduct = products.splice(index, 1)[0];
-    writeProducts(products);
+    products.splice(index, 1);
+    await saveProducts(products);
     
-    return NextResponse.json({ message: 'Product deleted', product: deletedProduct });
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('DELETE product error:', error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

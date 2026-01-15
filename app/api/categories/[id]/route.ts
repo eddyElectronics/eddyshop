@@ -1,32 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getCategories, saveCategories, getProducts } from '@/lib/db';
 import { Category } from '@/lib/categories';
-
-const dataFilePath = path.join(process.cwd(), 'data', 'categories.json');
-const productsFilePath = path.join(process.cwd(), 'data', 'products.json');
-
-function readCategories(): Category[] {
-  try {
-    const fileContents = fs.readFileSync(dataFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return [];
-  }
-}
-
-function writeCategories(categories: Category[]): void {
-  fs.writeFileSync(dataFilePath, JSON.stringify(categories, null, 2), 'utf8');
-}
-
-function readProducts(): any[] {
-  try {
-    const fileContents = fs.readFileSync(productsFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return [];
-  }
-}
 
 // GET - ดึงหมวดหมู่ตาม ID
 export async function GET(
@@ -35,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const categories = readCategories();
+    const categories = await getCategories();
     const category = categories.find(c => c.id === id);
     
     if (!category) {
@@ -44,6 +18,7 @@ export async function GET(
     
     return NextResponse.json(category);
   } catch (error) {
+    console.error('GET category error:', error);
     return NextResponse.json({ error: 'Failed to read category' }, { status: 500 });
   }
 }
@@ -56,7 +31,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const categories = readCategories();
+    const categories = await getCategories();
     const index = categories.findIndex(c => c.id === id);
     
     if (index === -1) {
@@ -76,10 +51,11 @@ export async function PUT(
     };
     
     categories[index] = updatedCategory;
-    writeCategories(categories);
+    await saveCategories(categories);
     
     return NextResponse.json(updatedCategory);
   } catch (error) {
+    console.error('PUT category error:', error);
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
   }
 }
@@ -91,7 +67,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const categories = readCategories();
+    const categories = await getCategories();
     const index = categories.findIndex(c => c.id === id);
     
     if (index === -1) {
@@ -99,7 +75,7 @@ export async function DELETE(
     }
     
     // ตรวจสอบว่ามีสินค้าในหมวดหมู่นี้หรือไม่
-    const products = readProducts();
+    const products = await getProducts();
     const categoryName = categories[index].name;
     const productsInCategory = products.filter(p => p.category === categoryName);
     
@@ -110,10 +86,11 @@ export async function DELETE(
     }
     
     const deletedCategory = categories.splice(index, 1)[0];
-    writeCategories(categories);
+    await saveCategories(categories);
     
     return NextResponse.json({ message: 'Category deleted', category: deletedCategory });
   } catch (error) {
+    console.error('DELETE category error:', error);
     return NextResponse.json({ error: 'Failed to delete category' }, { status: 500 });
   }
 }

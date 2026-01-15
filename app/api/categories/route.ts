@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getCategories, addCategory } from '@/lib/db';
 import { Category } from '@/lib/categories';
-
-const dataFilePath = path.join(process.cwd(), 'data', 'categories.json');
-
-function readCategories(): Category[] {
-  try {
-    const fileContents = fs.readFileSync(dataFilePath, 'utf8');
-    return JSON.parse(fileContents);
-  } catch {
-    return [];
-  }
-}
-
-function writeCategories(categories: Category[]): void {
-  fs.writeFileSync(dataFilePath, JSON.stringify(categories, null, 2), 'utf8');
-}
 
 // GET - ดึงหมวดหมู่ทั้งหมด
 export async function GET() {
   try {
-    const categories = readCategories();
+    const categories = await getCategories();
     return NextResponse.json(categories);
   } catch (error) {
+    console.error('GET categories error:', error);
     return NextResponse.json({ error: 'Failed to read categories' }, { status: 500 });
   }
 }
@@ -32,7 +17,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const categories = readCategories();
+    const categories = await getCategories();
     
     // ตรวจสอบว่าชื่อซ้ำหรือไม่
     if (categories.some(cat => cat.name === body.name)) {
@@ -46,11 +31,11 @@ export async function POST(request: NextRequest) {
       description: body.description || '',
     };
     
-    categories.push(newCategory);
-    writeCategories(categories);
+    await addCategory(newCategory);
     
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
+    console.error('POST category error:', error);
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }

@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getProducts, addProduct } from '@/lib/db';
 import { Product } from '@/lib/products';
-
-const dataFilePath = path.join(process.cwd(), 'data', 'products.json');
-
-function readProducts(): Product[] {
-  const fileContents = fs.readFileSync(dataFilePath, 'utf8');
-  return JSON.parse(fileContents);
-}
-
-function writeProducts(products: Product[]): void {
-  fs.writeFileSync(dataFilePath, JSON.stringify(products, null, 2), 'utf8');
-}
 
 // GET - ดึงสินค้าทั้งหมด
 export async function GET() {
   try {
-    const products = readProducts();
+    const products = await getProducts();
     return NextResponse.json(products);
   } catch (error) {
+    console.error('GET products error:', error);
     return NextResponse.json({ error: 'Failed to read products' }, { status: 500 });
   }
 }
@@ -28,7 +17,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const products = readProducts();
     
     // รองรับทั้ง images array และ image เดี่ยว
     const images = body.images || (body.image ? [body.image] : []);
@@ -47,11 +35,11 @@ export async function POST(request: NextRequest) {
       isUsed: body.isUsed || false,
     };
     
-    products.push(newProduct);
-    writeProducts(products);
+    await addProduct(newProduct);
     
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
+    console.error('POST product error:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }
