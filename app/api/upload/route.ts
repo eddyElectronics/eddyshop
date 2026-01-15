@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { put } from '@vercel/blob';
 
 // POST - อัพโหลดรูปภาพ
 export async function POST(request: NextRequest) {
@@ -13,12 +12,6 @@ export async function POST(request: NextRequest) {
     }
 
     const uploadedPaths: string[] = [];
-    const uploadDir = path.join(process.cwd(), 'public', 'images', 'products');
-    
-    // สร้างโฟลเดอร์ถ้ายังไม่มี
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
 
     for (const file of files) {
       // ตรวจสอบขนาดไฟล์ (< 5MB)
@@ -33,16 +26,15 @@ export async function POST(request: NextRequest) {
       }
 
       // สร้างชื่อไฟล์ unique
-      const ext = path.extname(file.name);
-      const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-      const filePath = path.join(uploadDir, uniqueName);
+      const ext = file.name.split('.').pop();
+      const uniqueName = `products/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
       
-      // แปลง File เป็น Buffer และบันทึก
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      fs.writeFileSync(filePath, buffer);
+      // อัพโหลดไปยัง Vercel Blob
+      const blob = await put(uniqueName, file, {
+        access: 'public',
+      });
       
-      uploadedPaths.push(`/images/products/${uniqueName}`);
+      uploadedPaths.push(blob.url);
     }
 
     return NextResponse.json({ 
