@@ -22,6 +22,7 @@ interface CartContextType {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  isInCart: (id: string) => boolean;
   totalItems: number;
   totalPrice: number;
   // Legacy API (for backwards compatibility)
@@ -55,16 +56,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isLoaded]);
 
-  // New API: addItem
+  // New API: addItem - ไม่เพิ่มซ้ำถ้ามีสินค้าอยู่แล้ว
   const addItem = (product: Product) => {
     setItems(prev => {
       const existingItem = prev.find(i => i.id === product.id);
       if (existingItem) {
-        return prev.map(i =>
-          i.id === product.id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
+        // สินค้านี้มีอยู่แล้วในตะกร้า - ไม่เพิ่มซ้ำ
+        return prev;
       }
       const newItem: CartItem = {
         id: product.id,
@@ -81,18 +79,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Legacy API: addToCart
-  const addToCart = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
+  // Legacy API: addToCart - ไม่เพิ่มซ้ำถ้ามีสินค้าอยู่แล้ว
+  const addToCart = (item: Omit<CartItem, 'quantity'>, _quantity = 1) => {
     setItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
       if (existingItem) {
-        return prev.map(i =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + quantity }
-            : i
-        );
+        // สินค้านี้มีอยู่แล้วในตะกร้า - ไม่เพิ่มซ้ำ
+        return prev;
       }
-      return [...prev, { ...item, quantity }];
+      return [...prev, { ...item, quantity: 1 }];
     });
   };
 
@@ -120,6 +115,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
+  const isInCart = (id: string) => {
+    return items.some(item => item.id === id);
+  };
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -133,6 +132,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        isInCart,
         totalItems,
         totalPrice,
       }}
