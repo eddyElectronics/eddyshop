@@ -2,9 +2,11 @@
 
 import { useCart } from '@/lib/cart-context';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function CartPage() {
-  const { items, removeFromCart, updateQuantity: _updateQuantity, clearCart, totalPrice } = useCart();
+  const { items, removeFromCart, clearCart } = useCart();
+  const [showPopup, setShowPopup] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('th-TH', {
@@ -122,36 +124,20 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Summary */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-zinc-600 dark:text-zinc-400">รวมทั้งหมด</span>
-            <span className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {formatPrice(totalPrice)}
-            </span>
-          </div>
-          
-          {/* Contact Info */}
-          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-            <h3 className="font-semibold text-zinc-900 dark:text-white mb-2">
-              ติดต่อสั่งซื้อ
-            </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              💬 แจ้งรหัสสินค้าหรือเซฟรูปแล้วส่งมาที่{' '}
-              <a 
-                href="http://m.me/airportthai" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-              >
-                m.me/airportthai
-              </a>
-            </p>
-          </div>
-          
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => setShowPopup(true)}
+            className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            ดำเนินการสั่งซื้อ
+          </button>
           <Link
             href="/products"
-            className="w-full border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 py-3 rounded-xl font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 py-3 rounded-xl font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -159,6 +145,42 @@ export default function CartPage() {
             เลือกซื้อสินค้าเพิ่ม
           </Link>
         </div>
+
+        {/* Popup Modal */}
+        {showPopup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full shadow-xl">
+              <div className="text-center">
+                <div className="text-5xl mb-4">💬</div>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
+                  วิธีการสั่งซื้อ
+                </h2>
+                <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                  แจ้งรหัสสินค้าหรือเซฟรูปแล้วส่งมาที่
+                </p>
+                <a
+                  href="http://m.me/airportthai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors mb-4"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.936 1.444 5.544 3.746 7.257v3.5l3.319-1.822c.927.258 1.907.396 2.935.396 5.523 0 10-4.145 10-9.243C22 6.145 17.523 2 12 2z"/>
+                  </svg>
+                  m.me/airportthai
+                </a>
+                <div>
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-medium"
+                  >
+                    ปิด
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
