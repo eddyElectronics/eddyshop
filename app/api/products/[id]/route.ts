@@ -66,6 +66,7 @@ export async function PUT(
       images: images ?? products[index].images,
       stock: body.stock !== undefined ? Number(body.stock) : products[index].stock,
       featured: body.featured !== undefined ? body.featured : products[index].featured,
+      isUsed: body.isUsed !== undefined ? body.isUsed : products[index].isUsed,
     };
     
     products[index] = updatedProduct;

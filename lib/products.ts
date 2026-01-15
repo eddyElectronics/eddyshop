@@ -10,8 +10,9 @@ export interface Product {
   category: string;
   image: string;  // รูปหลัก (backward compatible)
   images?: string[];  // รูปภาพหลายรูป
-  stock: number;
+  stock?: number;  // optional - ไม่บังคับ
   featured: boolean;
+  isUsed?: boolean;  // true = มือสอง, false/undefined = ของใหม่
 }
 
 // Helper function เพื่อดึงรูปทั้งหมดของสินค้า

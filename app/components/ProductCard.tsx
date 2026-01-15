@@ -47,14 +47,9 @@ export default function ProductCard({ product }: ProductCardProps) {
               {imageCount}
             </span>
           )}
-          {product.stock < 10 && product.stock > 0 && (
+          {product.isUsed && (
             <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-              เหลือน้อย
-            </span>
-          )}
-          {product.stock === 0 && (
-            <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-              สินค้าหมด
+              มือสอง
             </span>
           )}
           {product.featured && (

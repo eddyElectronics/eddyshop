@@ -33,17 +33,6 @@
     "featured": true
   },
   {
-    "id": "6",
-    "productCode": "SG1",
-    "name": "แว่นกันแดด UV Protection",
-    "description": "แว่นกันแดดป้องกัน UV 400 เลนส์โพลาไรซ์ ชัดเจน",
-    "price": 590,
-    "category": "เครื่องประดับ",
-    "image": "/images/products/sunglasses-1.jpg",
-    "stock": 35,
-    "featured": false
-  },
-  {
     "id": "1768445091405",
     "productCode": "MB1",
     "name": "IC28A",

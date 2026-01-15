@@ -12,8 +12,9 @@ interface Product {
   category: string;
   image: string;
   images?: string[];
-  stock: number;
+  stock?: number;
   featured: boolean;
+  isUsed?: boolean;
 }
 
 interface Category {
@@ -35,10 +36,12 @@ export default function AdminPage() {
     description: '',
     price: '',
     category: '',
-    images: [''],
-    stock: '',
+    images: [] as string[],
     featured: false,
+    isUsed: false,
   });
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -70,13 +73,49 @@ export default function AdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // กรอง URL ที่ว่างออก
-    const validImages = formData.images.filter(img => img.trim() !== '');
+    let uploadedImages = [...formData.images];
+    
+    // อัพโหลดไฟล์ภาพใหม่ถ้ามี
+    if (imageFiles.length > 0) {
+      setUploadingImages(true);
+      try {
+        const uploadFormData = new FormData();
+        imageFiles.forEach(file => {
+          uploadFormData.append('files', file);
+        });
+        
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          uploadedImages = [...uploadedImages, ...uploadData.paths];
+        } else {
+          const errorData = await uploadRes.json();
+          alert(errorData.error || 'อัพโหลดรูปภาพไม่สำเร็จ');
+          setUploadingImages(false);
+          return;
+        }
+      } catch (error) {
+        alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+        setUploadingImages(false);
+        return;
+      }
+      setUploadingImages(false);
+    }
     
     const submitData = {
-      ...formData,
-      images: validImages.length > 0 ? validImages : undefined,
-      image: validImages[0] || '/images/products/placeholder.jpg',
+      productCode: formData.productCode,
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      category: formData.category,
+      images: uploadedImages.length > 0 ? uploadedImages : undefined,
+      image: uploadedImages[0] || '/images/products/placeholder.jpg',
+      featured: formData.featured,
+      isUsed: formData.isUsed,
     };
     
     try {
@@ -115,7 +154,7 @@ export default function AdminPage() {
     // ดึง images array หรือใช้ image เดี่ยว
     const productImages = product.images && product.images.length > 0 
       ? product.images 
-      : (product.image ? [product.image] : ['']);
+      : (product.image ? [product.image] : []);
     
     setFormData({
       productCode: product.productCode || '',
@@ -124,9 +163,10 @@ export default function AdminPage() {
       price: product.price.toString(),
       category: product.category,
       images: productImages,
-      stock: product.stock.toString(),
       featured: product.featured,
+      isUsed: product.isUsed || false,
     });
+    setImageFiles([]);
     setShowForm(true);
   };
 
@@ -155,25 +195,43 @@ export default function AdminPage() {
       description: '',
       price: '',
       category: '',
-      images: [''],
-      stock: '',
+      images: [],
       featured: false,
+      isUsed: false,
     });
+    setImageFiles([]);
   };
 
-  const addImageField = () => {
-    setFormData({ ...formData, images: [...formData.images, ''] });
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const validFiles: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`ไฟล์ ${file.name} มีขนาดเกิน 5MB`);
+        continue;
+      }
+      if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+        alert(`ไฟล์ ${file.name} ไม่ใช่รูปภาพที่รองรับ`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    setImageFiles(prev => [...prev, ...validFiles]);
   };
 
-  const removeImageField = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] });
+  const removeImageFile = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updateImageField = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData({ ...formData, images: newImages });
+  const removeExistingImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   const formatPrice = (price: number) => {
@@ -294,36 +352,19 @@ export default function AdminPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      ราคา (บาท) *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      จำนวนสต็อก *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    ราคา (บาท) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0"
+                  />
                 </div>
 
                 <div>
@@ -353,59 +394,110 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    รูปภาพสินค้า
+                    รูปภาพสินค้า (ไม่เกิน 5MB ต่อรูป)
                   </label>
-                  <div className="space-y-2">
-                    {formData.images.map((image, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={image}
-                          onChange={(e) => updateImageField(index, e.target.value)}
-                          className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={`URL รูปภาพ ${index + 1}`}
-                        />
-                        {formData.images.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeImageField(index)}
-                            className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="ลบรูป"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
+                  
+                  {/* รูปภาพที่มีอยู่แล้ว */}
+                  {formData.images.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">รูปภาพปัจจุบัน:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.images.map((img, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={img}
+                              alt={`รูปที่ ${index + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeExistingImage(index)}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ✕
+                            </button>
+                            {index === 0 && (
+                              <span className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-[10px] text-center py-0.5 rounded-b-lg">
+                                หลัก
+                              </span>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addImageField}
-                    className="mt-2 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </div>
+                  )}
+                  
+                  {/* ไฟล์ที่เลือกใหม่ */}
+                  {imageFiles.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">รูปภาพใหม่ที่จะอัพโหลด:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {imageFiles.map((file, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-20 h-20 object-cover rounded-lg border-2 border-dashed border-blue-400"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImageFile(index)}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* ปุ่มเลือกไฟล์ */}
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                    <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    เพิ่มรูปภาพ
-                  </button>
+                    <span className="text-sm text-zinc-600 dark:text-zinc-400">คลิกเพื่อเลือกรูปภาพ</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    สามารถเพิ่มรูปได้หลายรูป รูปแรกจะเป็นรูปหลัก
+                    รองรับไฟล์ JPG, PNG, GIF, WebP (ไม่เกิน 5MB ต่อรูป) - รูปแรกจะเป็นรูปหลัก
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="featured" className="text-sm text-zinc-700 dark:text-zinc-300">
-                    สินค้าแนะนำ (แสดงในหน้าแรก)
-                  </label>
+                {/* Checkboxes */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isUsed"
+                      checked={formData.isUsed}
+                      onChange={(e) => setFormData({ ...formData, isUsed: e.target.checked })}
+                      className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                    />
+                    <label htmlFor="isUsed" className="text-sm text-zinc-700 dark:text-zinc-300">
+                      สินค้ามือสอง
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="featured"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="featured" className="text-sm text-zinc-700 dark:text-zinc-300">
+                      สินค้าแนะนำ (แสดงในหน้าแรก)
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -413,14 +505,16 @@ export default function AdminPage() {
                     type="button"
                     onClick={resetForm}
                     className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    disabled={uploadingImages}
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={uploadingImages}
                   >
-                    {editingProduct ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า'}
+                    {uploadingImages ? 'กำลังอัพโหลด...' : (editingProduct ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า')}
                   </button>
                 </div>
               </form>
@@ -447,7 +541,7 @@ export default function AdminPage() {
                     ราคา
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
-                    สต็อก
+                    ประเภท
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
                     สถานะ
@@ -501,8 +595,16 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-zinc-900 dark:text-white font-medium text-sm">
                       {formatPrice(product.price)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-900 dark:text-white text-sm">
-                      {product.stock}
+                    <td className="px-4 py-3">
+                      {product.isUsed ? (
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded text-xs">
+                          มือสอง
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs">
+                          ของใหม่
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {product.featured ? (
@@ -598,9 +700,15 @@ export default function AdminPage() {
                       <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                         {formatPrice(product.price)}
                       </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        สต็อก: {product.stock}
-                      </span>
+                      {product.isUsed ? (
+                        <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded text-[10px]">
+                          มือสอง
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-[10px]">
+                          ของใหม่
+                        </span>
+                      )}
                       <span className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-[10px] text-zinc-600 dark:text-zinc-400">
                         {product.category}
                       </span>
@@ -677,9 +785,9 @@ export default function AdminPage() {
           </div>
           <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800">
             <div className="text-3xl font-bold text-orange-600">
-              {products.filter(p => p.stock < 10).length}
+              {products.filter(p => p.isUsed).length}
             </div>
-            <div className="text-zinc-500 dark:text-zinc-400 text-sm">สต็อกต่ำ</div>
+            <div className="text-zinc-500 dark:text-zinc-400 text-sm">สินค้ามือสอง</div>
           </div>
         </div>
       </div>

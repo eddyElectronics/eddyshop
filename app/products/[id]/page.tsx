@@ -75,6 +75,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
                 {product.category}
               </span>
+              {product.isUsed ? (
+                <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                  มือสอง
+                </span>
+              ) : (
+                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                  ของใหม่
+                </span>
+              )}
               {product.featured && (
                 <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                   แนะนำ
@@ -95,37 +104,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </span>
             </div>
 
-            {/* Stock Status */}
-            <div className="mb-6">
-              {product.stock > 10 ? (
-                <span className="inline-flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  มีสินค้า ({product.stock} ชิ้น)
-                </span>
-              ) : product.stock > 0 ? (
-                <span className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-400">
-                  <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                  เหลือน้อย ({product.stock} ชิ้น)
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2 text-red-600 dark:text-red-400">
-                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                  สินค้าหมด
-                </span>
-              )}
-            </div>
-
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
               <button
-                className={`flex-1 py-3 px-6 rounded-full font-semibold text-center transition-colors ${
-                  product.stock > 0
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
-                }`}
-                disabled={product.stock === 0}
+                className="flex-1 py-3 px-6 rounded-full font-semibold text-center transition-colors bg-blue-600 text-white hover:bg-blue-700"
               >
-                {product.stock > 0 ? 'เพิ่มลงตะกร้า' : 'สินค้าหมด'}
+                สนใจสินค้านี้
               </button>
               <Link
                 href="/products"
