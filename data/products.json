@@ -1,0 +1,60 @@
+[
+  {
+    "id": "3",
+    "productCode": "SH1",
+    "name": "รองเท้าผ้าใบ Casual",
+    "description": "รองเท้าผ้าใบสไตล์ลำลอง พื้นนุ่ม เดินสบาย",
+    "price": 1290,
+    "category": "รองเท้า",
+    "image": "/images/products/shoes-1.jpg",
+    "stock": 25,
+    "featured": true
+  },
+  {
+    "id": "4",
+    "productCode": "BG1",
+    "name": "กระเป๋าสะพายข้าง",
+    "description": "กระเป๋าสะพายข้างหนัง PU คุณภาพดี ใส่ของได้เยอะ",
+    "price": 650,
+    "category": "กระเป๋า",
+    "image": "/images/products/bag-1.jpg",
+    "stock": 40,
+    "featured": false
+  },
+  {
+    "id": "5",
+    "productCode": "WT1",
+    "name": "นาฬิกาข้อมือ Classic",
+    "description": "นาฬิกาข้อมือดีไซน์คลาสสิค สายหนังแท้ กันน้ำ",
+    "price": 2490,
+    "category": "เครื่องประดับ",
+    "image": "/images/products/watch-1.jpg",
+    "stock": 15,
+    "featured": true
+  },
+  {
+    "id": "6",
+    "productCode": "SG1",
+    "name": "แว่นกันแดด UV Protection",
+    "description": "แว่นกันแดดป้องกัน UV 400 เลนส์โพลาไรซ์ ชัดเจน",
+    "price": 590,
+    "category": "เครื่องประดับ",
+    "image": "/images/products/sunglasses-1.jpg",
+    "stock": 35,
+    "featured": false
+  },
+  {
+    "id": "1768445091405",
+    "productCode": "MB1",
+    "name": "IC28A",
+    "description": "IC28A",
+    "price": 15000,
+    "category": "โมบาย",
+    "image": "/images/products/placeholder.jpg",
+    "images": [
+      "/images/products/placeholder.jpg"
+    ],
+    "stock": 1,
+    "featured": false
+  }
+]
