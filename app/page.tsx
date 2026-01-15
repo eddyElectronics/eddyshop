@@ -260,26 +260,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              ยินดีต้อนรับสู่ EddyShop
-            </h1>
-            <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              ร้านค้าออนไลน์คุณภาพ สินค้าหลากหลาย ราคาดี จัดส่งรวดเร็ว
-            </p>
-            <button
-              onClick={() => handleViewProducts()}
-              className="inline-block bg-white text-blue-600 font-semibold px-8 py-3 rounded-full hover:bg-blue-50 transition-colors"
-            >
-              เลือกซื้อสินค้า
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
