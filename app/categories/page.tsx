@@ -1,10 +1,9 @@
-import { getCategories as getCategoriesFromProducts, getProductsByCategory } from '@/lib/products';
 import { getCategories } from '@/lib/categories';
+import { getProductsByCategory } from '@/lib/products';
 import Link from 'next/link';
 
 export default function CategoriesPage() {
   const categories = getCategories();
-  const productCategories = getCategoriesFromProducts();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">

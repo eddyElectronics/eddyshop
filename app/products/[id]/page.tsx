@@ -2,6 +2,7 @@ import { getProductById, getProducts, formatPrice, getProductImages } from '@/li
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ImageGallery from '@/app/components/ImageGallery';
+import AddToCartButton from '@/app/components/AddToCartButton';
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -106,35 +107,43 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-              <button
-                className="flex-1 py-3 px-6 rounded-full font-semibold text-center transition-colors bg-blue-600 text-white hover:bg-blue-700"
-              >
-                สนใจสินค้านี้
-              </button>
+              <AddToCartButton 
+                product={{
+                  id: product.id,
+                  productCode: product.productCode,
+                  name: product.name,
+                  price: product.price,
+                  image: images[0] || '/images/products/placeholder.jpg',
+                  isUsed: product.isUsed,
+                }}
+              />
               <Link
-                href="/products"
-                className="flex-1 py-3 px-6 rounded-full font-semibold text-center border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-blue-600 hover:text-blue-600 transition-colors"
+                href="/cart"
+                className="flex-1 py-3 px-6 rounded-full font-semibold text-center border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
               >
-                ดูสินค้าอื่น
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                ดูตะกร้าสินค้า
               </Link>
             </div>
 
             {/* Additional Info */}
             <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
               <h3 className="font-semibold text-zinc-900 dark:text-white mb-4">
-                ข้อมูลเพิ่มเติม
+                ติดต่อสั่งซื้อ
               </h3>
-              <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <li className="flex items-center gap-2">
-                  <span>🚚</span> จัดส่งฟรีเมื่อซื้อครบ 1,000 บาท
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>↩️</span> เปลี่ยนคืนได้ภายใน 7 วัน
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✅</span> รับประกันสินค้าแท้ 100%
-                </li>
-              </ul>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                💬 แจ้งรหัสสินค้าหรือเซฟรูปแล้วส่งมาที่{' '}
+                <a 
+                  href="http://m.me/airportthai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  m.me/airportthai
+                </a>
+              </p>
             </div>
           </div>
         </div>

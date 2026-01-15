@@ -28,5 +28,19 @@
     ],
     "featured": false,
     "isUsed": true
+  },
+  {
+    "id": "1768461651339",
+    "productCode": "กดห",
+    "name": "ดหกดกหด",
+    "description": "ดหกดห",
+    "price": 100,
+    "category": "อุปกรณ์",
+    "image": "/images/products/1768461651305-soigmc.png",
+    "images": [
+      "/images/products/1768461651305-soigmc.png"
+    ],
+    "featured": false,
+    "isUsed": true
   }
 ]
