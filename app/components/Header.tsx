@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
 
@@ -22,12 +23,21 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
+            <Image
+              src="/images/logo.svg"
+              alt="Eddy Electronics"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-[#7a9a8a] leading-tight italic">
+                EDDY
+              </span>
+              <span className="text-xs text-[#7a9a8a] tracking-wider -mt-1">
+                ELECTRONICS
+              </span>
             </div>
-            <span className="text-xl font-bold text-zinc-900 dark:text-white">
-              EddyShop
-            </span>
           </Link>
 
           {/* Search Bar - Desktop */}
