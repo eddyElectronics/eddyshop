@@ -1,18 +1,14 @@
-import { getProductById, getProducts, formatPrice, getProductImages } from '@/lib/products';
+import { getProductById, formatPrice, getProductImages } from '@/lib/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ImageGallery from '@/app/components/ImageGallery';
 import AddToCartButton from '@/app/components/AddToCartButton';
 
+// Use dynamic rendering since products are stored in Vercel Blob
+export const dynamic = 'force-dynamic';
+
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-export async function generateStaticParams() {
-  const products = getProducts();
-  return products.map((product) => ({
-    id: product.id,
-  }));
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
