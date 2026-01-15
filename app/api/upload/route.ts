@@ -4,6 +4,12 @@ import { put } from '@vercel/blob';
 // POST - อัพโหลดรูปภาพ
 export async function POST(request: NextRequest) {
   try {
+    // ตรวจสอบ BLOB token
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error('BLOB_READ_WRITE_TOKEN is not set');
+      return NextResponse.json({ error: 'Storage not configured. Please set BLOB_READ_WRITE_TOKEN.' }, { status: 500 });
+    }
+
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     
@@ -43,6 +49,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Failed to upload files' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `Failed to upload: ${errorMessage}` }, { status: 500 });
   }
 }
