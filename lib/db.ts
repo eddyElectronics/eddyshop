@@ -62,9 +62,13 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
   
   if (index === -1) return null;
   
-  products[index] = { ...products[index], ...updates };
+  const existingProduct = products[index];
+  if (!existingProduct) return null;
+  
+  const updatedProduct: Product = { ...existingProduct, ...updates, id: existingProduct.id };
+  products[index] = updatedProduct;
   await saveProducts(products);
-  return products[index];
+  return updatedProduct;
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
@@ -130,9 +134,13 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
   
   if (index === -1) return null;
   
-  categories[index] = { ...categories[index], ...updates };
+  const existingCategory = categories[index];
+  if (!existingCategory) return null;
+  
+  const updatedCategory: Category = { ...existingCategory, ...updates, id: existingCategory.id };
+  categories[index] = updatedCategory;
   await saveCategories(categories);
-  return categories[index];
+  return updatedCategory;
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {

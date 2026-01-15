@@ -4,7 +4,7 @@ import { Category } from '@/lib/categories';
 
 // GET - ดึงหมวดหมู่ตาม ID
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -43,11 +43,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Category name already exists' }, { status: 400 });
     }
     
+    const existingCategory = categories[index];
+    if (!existingCategory) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+    }
+
     const updatedCategory: Category = {
-      ...categories[index],
-      name: body.name ?? categories[index].name,
-      icon: body.icon ?? categories[index].icon,
-      description: body.description ?? categories[index].description,
+      id: existingCategory.id,
+      name: body.name ?? existingCategory.name,
+      icon: body.icon ?? existingCategory.icon,
+      description: body.description ?? existingCategory.description,
     };
     
     categories[index] = updatedCategory;
@@ -62,7 +67,7 @@ export async function PUT(
 
 // DELETE - ลบหมวดหมู่
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -74,9 +79,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
     
+    const categoryToDelete = categories[index];
+    if (!categoryToDelete) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+    }
+    
     // ตรวจสอบว่ามีสินค้าในหมวดหมู่นี้หรือไม่
     const products = await getProducts();
-    const categoryName = categories[index].name;
+    const categoryName = categoryToDelete.name;
     const productsInCategory = products.filter(p => p.category === categoryName);
     
     if (productsInCategory.length > 0) {

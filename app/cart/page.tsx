@@ -4,7 +4,7 @@ import { useCart } from '@/lib/cart-context';
 import Link from 'next/link';
 
 export default function CartPage() {
-  const { items, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
+  const { items, removeFromCart, updateQuantity: _updateQuantity, clearCart, totalPrice } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('th-TH', {

@@ -114,6 +114,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   name: product.name,
                   price: product.price,
                   image: images[0] || '/images/products/placeholder.jpg',
+                  category: product.category,
                   isUsed: product.isUsed,
                 }}
               />

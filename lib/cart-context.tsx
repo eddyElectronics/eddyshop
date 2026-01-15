@@ -1,25 +1,32 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Product } from '@/lib/products';
 
 export interface CartItem {
   id: string;
-  productCode: string;
+  productCode?: string;
   name: string;
   price: number;
-  image: string;
+  image?: string;
+  images?: string[];
+  category: string;
   quantity: number;
   isUsed?: boolean;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
-  removeFromCart: (id: string) => void;
+  // New API
+  addItem: (product: Product) => void;
+  removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  // Legacy API (for backwards compatibility)
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  removeFromCart: (id: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,6 +55,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isLoaded]);
 
+  // New API: addItem
+  const addItem = (product: Product) => {
+    setItems(prev => {
+      const existingItem = prev.find(i => i.id === product.id);
+      if (existingItem) {
+        return prev.map(i =>
+          i.id === product.id
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
+        );
+      }
+      const newItem: CartItem = {
+        id: product.id,
+        productCode: product.productCode,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        images: product.images,
+        category: product.category,
+        quantity: 1,
+        isUsed: product.isUsed,
+      };
+      return [...prev, newItem];
+    });
+  };
+
+  // Legacy API: addToCart
   const addToCart = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
     setItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
@@ -62,13 +96,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const removeFromCart = (id: string) => {
+  // New API: removeItem
+  const removeItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
+  // Legacy API: removeFromCart
+  const removeFromCart = removeItem;
+
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeItem(id);
       return;
     }
     setItems(prev =>
@@ -89,6 +127,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         items,
+        addItem,
+        removeItem,
         addToCart,
         removeFromCart,
         updateQuantity,

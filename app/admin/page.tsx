@@ -231,6 +231,7 @@ export default function AdminPage() {
     const validFiles: File[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      if (!file) continue;
       if (file.size > 5 * 1024 * 1024) {
         alert(`ไฟล์ ${file.name} มีขนาดเกิน 5MB`);
         continue;

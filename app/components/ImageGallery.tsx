@@ -24,7 +24,7 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
       {/* Main Image */}
       <div className="relative aspect-square bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm">
         <Image
-          src={images[selectedIndex]}
+          src={images[selectedIndex] || '/images/products/placeholder.jpg'}
           alt={`${productName} - รูปที่ ${selectedIndex + 1}`}
           fill
           className="object-cover"

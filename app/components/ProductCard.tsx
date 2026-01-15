@@ -12,7 +12,7 @@ interface ProductCardProps {
 // Helper function เพื่อดึงรูปแรกของสินค้า
 function getFirstImage(product: Product): string {
   if (product.images && product.images.length > 0) {
-    return product.images[0];
+    return product.images[0] || '/images/products/placeholder.jpg';
   }
   return product.image || '/images/products/placeholder.jpg';
 }
@@ -37,6 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       name: product.name,
       price: product.price,
       image: getFirstImage(product),
+      category: product.category,
       isUsed: product.isUsed,
     });
   };

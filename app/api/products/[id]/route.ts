@@ -4,7 +4,7 @@ import { Product } from '@/lib/products';
 
 // GET - ดึงสินค้าตาม ID
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -37,6 +37,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     
+    const existingProduct = products[index];
+    if (!existingProduct) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    
     // รองรับทั้ง images array และ image เดี่ยว
     let images = body.images;
     if (!images && body.image) {
@@ -44,17 +49,17 @@ export async function PUT(
     }
     
     const updatedProduct: Product = {
-      ...products[index],
-      productCode: body.productCode ?? products[index].productCode ?? '',
-      name: body.name ?? products[index].name,
-      description: body.description ?? products[index].description,
-      price: body.price !== undefined ? Number(body.price) : products[index].price,
-      category: body.category ?? products[index].category,
-      image: images ? images[0] : products[index].image,
-      images: images ?? products[index].images,
-      stock: body.stock !== undefined ? Number(body.stock) : products[index].stock,
-      featured: body.featured !== undefined ? body.featured : products[index].featured,
-      isUsed: body.isUsed !== undefined ? body.isUsed : products[index].isUsed,
+      id: existingProduct.id,
+      productCode: body.productCode ?? existingProduct.productCode ?? '',
+      name: body.name ?? existingProduct.name,
+      description: body.description ?? existingProduct.description,
+      price: body.price !== undefined ? Number(body.price) : existingProduct.price,
+      category: body.category ?? existingProduct.category,
+      image: images ? images[0] : existingProduct.image,
+      images: images ?? existingProduct.images,
+      stock: body.stock !== undefined ? Number(body.stock) : existingProduct.stock,
+      featured: body.featured !== undefined ? body.featured : existingProduct.featured,
+      isUsed: body.isUsed !== undefined ? body.isUsed : existingProduct.isUsed,
     };
     
     products[index] = updatedProduct;
@@ -69,7 +74,7 @@ export async function PUT(
 
 // DELETE - ลบสินค้า
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
