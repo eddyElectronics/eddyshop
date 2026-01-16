@@ -61,17 +61,17 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 <div key={item.id} className="flex gap-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
                   <div className="relative w-20 h-20 flex-shrink-0">
                     <Image
-                      src={item.product.images?.[0] || item.product.image || '/images/products/placeholder.jpg'}
-                      alt={item.product.name}
+                      src={item.images?.[0] || item.image || '/images/products/placeholder.jpg'}
+                      alt={item.name}
                       fill
                       className="object-cover rounded-lg"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-zinc-900 dark:text-white truncate">
-                      {item.product.name}
+                      {item.name}
                     </h3>
-                    <p className="text-sm text-zinc-500">{formatPrice(item.product.price)}</p>
+                    <p className="text-sm text-zinc-500">{formatPrice(item.price)}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -98,7 +98,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       </svg>
                     </button>
                     <span className="font-semibold text-blue-600">
-                      {formatPrice(item.product.price * item.quantity)}
+                      {formatPrice(item.price * item.quantity)}
                     </span>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 onClick={() => {
                   // Generate LINE message with cart items
                   const message = items.map(item => 
-                    `${item.product.productCode || ''} ${item.product.name} x${item.quantity} = ${formatPrice(item.product.price * item.quantity)}`
+                    `${item.productCode || ''} ${item.name} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`
                   ).join('\n');
                   const total = `\nรวม: ${formatPrice(totalPrice)}`;
                   const lineUrl = `https://line.me/R/oaMessage/@eddyelectronics/?${encodeURIComponent('สนใจสั่งซื้อสินค้า:\n' + message + total)}`;
