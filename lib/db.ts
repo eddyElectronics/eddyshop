@@ -4,8 +4,8 @@ import { Category } from './categories';
 import fs from 'fs';
 import path from 'path';
 
-const PRODUCTS_BLOB = 'data/products.json';
-const CATEGORIES_BLOB = 'data/categories.json';
+const PRODUCTS_BLOB = 'products.json';
+const CATEGORIES_BLOB = 'categories.json';
 
 // Check if running on Vercel
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
@@ -18,14 +18,22 @@ let categoriesCache: Category[] | null = null;
 
 async function readBlobJson<T>(blobName: string): Promise<T | null> {
   try {
-    const { blobs } = await list({ prefix: blobName });
-    if (blobs.length === 0) return null;
+    console.log(`Reading blob: ${blobName}`);
+    const { blobs } = await list();
+    console.log(`Found ${blobs.length} blobs`);
     
-    const blob = blobs[0];
-    if (!blob) return null;
+    const blob = blobs.find(b => b.pathname === blobName || b.pathname.endsWith(blobName));
+    if (!blob) {
+      console.log(`Blob ${blobName} not found`);
+      return null;
+    }
     
-    const response = await fetch(blob.url);
-    if (!response.ok) return null;
+    console.log(`Fetching blob from: ${blob.url}`);
+    const response = await fetch(blob.url, { cache: 'no-store' });
+    if (!response.ok) {
+      console.error(`Fetch blob failed: ${response.status}`);
+      return null;
+    }
     
     return await response.json() as T;
   } catch (error) {
@@ -35,25 +43,28 @@ async function readBlobJson<T>(blobName: string): Promise<T | null> {
 }
 
 async function writeBlobJson<T>(blobName: string, data: T): Promise<void> {
+  console.log(`Writing blob: ${blobName}`);
+  
   try {
     // Delete old blob first
     try {
-      const { blobs } = await list({ prefix: blobName });
-      for (const blob of blobs) {
-        await del(blob.url);
+      const { blobs } = await list();
+      const oldBlob = blobs.find(b => b.pathname === blobName || b.pathname.endsWith(blobName));
+      if (oldBlob) {
+        console.log(`Deleting old blob: ${oldBlob.url}`);
+        await del(oldBlob.url);
       }
     } catch (delError) {
       console.warn(`Delete old blob ${blobName} warning:`, delError);
-      // Continue even if delete fails
     }
     
     // Write new blob
-    await put(blobName, JSON.stringify(data, null, 2), {
+    const result = await put(blobName, JSON.stringify(data, null, 2), {
       access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
     });
-    console.log(`Successfully wrote blob: ${blobName}`);
+    console.log(`Successfully wrote blob: ${blobName}, url: ${result.url}`);
   } catch (error) {
     console.error(`Write blob ${blobName} error:`, error);
     throw error;
