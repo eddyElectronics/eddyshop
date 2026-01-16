@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useCart } from '@/lib/cart-context';
 import { Product } from '@/lib/products';
@@ -66,73 +66,230 @@ export default function Home() {
     setTimeout(() => scrollToSection(productsRef), 100);
   };
 
-  // Product Modal
+  // Product Modal with Image Gallery
   const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
-    const imageUrl = product.images?.[0] || product.image || '/images/products/placeholder.jpg';
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    
+    // Get all images
+    const allImages = product.images && product.images.length > 0 
+      ? product.images 
+      : [product.image || '/images/products/placeholder.jpg'];
+    
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isFullscreen) {
+          setIsFullscreen(false);
+        } else {
+          onClose();
+        }
+      }
+      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+    }, [isFullscreen, allImages.length, onClose]);
+
+    useEffect(() => {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+      };
+    }, [handleKeyDown]);
+
+    const goToPrev = () => setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+    const goToNext = () => setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
     
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="relative aspect-video">
-            <Image
-              src={imageUrl}
-              alt={product.name}
-              fill
-              className="object-cover rounded-t-2xl"
-            />
+      <>
+        {/* Fullscreen Image View */}
+        {isFullscreen && (
+          <div 
+            className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
+            onClick={() => setIsFullscreen(false)}
+          >
             <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 bg-white/90 rounded-full hover:bg-white"
+              onClick={() => setIsFullscreen(false)}
+              className="absolute top-4 right-4 text-white/80 hover:text-white p-2 z-50"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-          </div>
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-2">
-              {product.productCode && (
-                <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded font-semibold">
-                  {product.productCode}
-                </span>
-              )}
-              <span className="text-sm text-zinc-500">{product.category}</span>
-              {product.sold && (
-                <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">ขายแล้ว</span>
-              )}
-              {!product.sold && product.isUsed && (
-                <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">มือสอง</span>
-              )}
-            </div>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{product.name}</h2>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-4">{product.description}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold text-blue-600">{formatPrice(product.price)}</span>
-              {product.sold ? (
-                <span className="flex items-center gap-2 px-6 py-3 bg-zinc-400 text-white rounded-full cursor-not-allowed">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  สินค้าขายแล้ว
-                </span>
-              ) : (
+            
+            {allImages.length > 1 && (
+              <>
                 <button
-                  onClick={() => {
-                    addItem(product);
-                    onClose();
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-50"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                  เพิ่มลงตะกร้า
                 </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-50"
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            <div className="relative w-full h-full max-w-5xl max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
+              <Image
+                src={allImages[currentIndex] || '/images/products/placeholder.jpg'}
+                alt={`${product.name} - รูปที่ ${currentIndex + 1}`}
+                fill
+                className="object-contain"
+                priority
+                sizes="100vw"
+              />
+            </div>
+            
+            {allImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                <span className="text-white/80 text-sm">{currentIndex + 1} / {allImages.length}</span>
+                <div className="flex gap-2">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                      className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
+                        idx === currentIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <Image src={img} alt={`รูป ${idx + 1}`} width={48} height={48} className="object-cover w-full h-full" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Product Modal */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="relative aspect-video cursor-zoom-in" onClick={() => setIsFullscreen(true)}>
+              <Image
+                src={allImages[currentIndex] || '/images/products/placeholder.jpg'}
+                alt={product.name}
+                fill
+                className="object-cover rounded-t-2xl"
+              />
+              
+              {/* Navigation Arrows */}
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
               )}
+              
+              {/* Image Counter */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
+                  {currentIndex + 1} / {allImages.length}
+                </div>
+              )}
+              
+              {/* Fullscreen hint */}
+              <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                คลิกเพื่อขยาย
+              </div>
+              
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 bg-white/90 rounded-full hover:bg-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex gap-2 p-4 overflow-x-auto bg-zinc-50 dark:bg-zinc-800">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      idx === currentIndex ? 'border-blue-600' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <Image src={img} alt={`รูป ${idx + 1}`} width={64} height={64} className="object-cover w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-2">
+                {product.productCode && (
+                  <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded font-semibold">
+                    {product.productCode}
+                  </span>
+                )}
+                <span className="text-sm text-zinc-500">{product.category}</span>
+                {product.sold && (
+                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">ขายแล้ว</span>
+                )}
+                {!product.sold && product.isUsed && (
+                  <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">มือสอง</span>
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{product.name}</h2>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-4">{product.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-bold text-blue-600">{formatPrice(product.price)}</span>
+                {product.sold ? (
+                  <span className="flex items-center gap-2 px-6 py-3 bg-zinc-400 text-white rounded-full cursor-not-allowed">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    สินค้าขายแล้ว
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      addItem(product);
+                      onClose();
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    เพิ่มลงตะกร้า
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   };
 
