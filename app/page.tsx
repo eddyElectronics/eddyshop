@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useCart } from '@/lib/cart-context';
 import { Product } from '@/lib/products';
-import { Category } from '@/lib/categories';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('th-TH', {
@@ -16,30 +15,20 @@ function formatPrice(price: number): string {
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentSection, setCurrentSection] = useState(0);
   const { addItem } = useCart();
 
   const productsRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const featuresRef = useRef<HTMLElement>(null);
 
   // Fetch data
   useEffect(() => {
     async function fetchData() {
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/categories')
-        ]);
-        const productsData = await productsRes.json();
-        const categoriesData = await categoriesRes.json();
+        const res = await fetch('/api/products');
+        const productsData = await res.json();
         setProducts(productsData);
-        setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -81,7 +70,6 @@ export default function Home() {
   useEffect(() => {
     const handleSpaSearch = (e: CustomEvent<string>) => {
       setSearchQuery(e.detail);
-      setSelectedCategory('');
       productsRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
@@ -89,42 +77,16 @@ export default function Home() {
     return () => window.removeEventListener('spa-search', handleSpaSearch as EventListener);
   }, []);
 
-  // Intersection Observer for section tracking
-  useEffect(() => {
-    const sections = [heroRef.current, featuresRef.current, productsRef.current];
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = sections.findIndex((section) => section === entry.target);
-            if (index !== -1) setCurrentSection(index);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
 
-    sections.forEach((section) => {
-      if (section) observer.observe(section);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollToSection = (index: number) => {
-    const sections = [heroRef.current, featuresRef.current, productsRef.current];
-    sections[index]?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   // Filter and sort products: new items first, then old items, sold items last
   const filteredProducts = products
     .filter(product => {
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
       const matchesSearch = !searchQuery || 
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.productCode?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      return matchesSearch;
     })
     .sort((a, b) => {
       // Sold items go to the end
@@ -555,182 +517,13 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-[#403C2A] overflow-x-hidden">
-      {/* Section Navigation Dots */}
-      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
-        {[0, 1, 2].map((index) => (
-          <button
-            key={index}
-            onClick={() => scrollToSection(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              currentSection === index
-                ? 'bg-white scale-125'
-                : 'bg-white/40 hover:bg-white/70'
-            }`}
-            aria-label={`ไปยังส่วนที่ ${index + 1}`}
-          />
-        ))}
-      </div>
-
-      {/* Hero Section - Fullscreen */}
-      <section
-        ref={heroRef}
-        className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden"
-      >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, #BFB595 1px, transparent 0)`,
-            backgroundSize: '40px 40px'
-          }} />
-        </div>
-
-        {/* Animated Gradient Orbs */}
-        <div className="absolute top-20 left-20 w-72 h-72 bg-[#BFB595]/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#7a9a8a]/20 rounded-full blur-3xl animate-pulse delay-1000" />
-
-        {/* Logo & Brand */}
-        <div className="relative z-10 text-center">
-          <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto mb-8 animate-bounce-slow">
-            <Image
-              src="/images/logo.svg"
-              alt="Eddy Electronics"
-              fill
-              className="object-contain drop-shadow-2xl"
-              priority
-            />
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">
-            <span className="text-[#7a9a8a] italic">EDDY</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-[#BFB595] tracking-[0.3em] uppercase mb-8">
-            Electronics
-          </p>
-          
-          <p className="text-lg md:text-xl text-white/80 max-w-xl mx-auto mb-12 leading-relaxed">
-            ร้านอิเล็กทรอนิกส์คุณภาพ<br />
-            สินค้าหลากหลาย ราคาดี จัดส่งรวดเร็ว
-          </p>
-
-          {/* CTA Button */}
-          <button
-            onClick={() => scrollToSection(2)}
-            className="group px-8 py-4 bg-white text-[#403C2A] rounded-full font-semibold text-lg hover:bg-[#BFB595] transition-all duration-300 transform hover:scale-105"
-          >
-            <span className="flex items-center gap-2">
-              ดูสินค้าทั้งหมด
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </span>
-          </button>
-        </div>
-
-        {/* Scroll Down Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-white/60 text-sm tracking-wider">Scroll Down</span>
-          <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
-      </section>
-
-      {/* Features Section - Fullscreen */}
-      <section
-        ref={featuresRef}
-        className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#403C2A] to-[#2D2A1E] px-4 py-20"
-      >
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold text-white text-center mb-4">
-            ทำไมต้องเลือกเรา?
-          </h2>
-          <p className="text-[#BFB595] text-center text-lg mb-16 max-w-2xl mx-auto">
-            เราพร้อมให้บริการคุณด้วยสินค้าคุณภาพและบริการที่ดีที่สุด
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-3xl p-8 text-center hover:bg-white/10 transition-all duration-500 transform hover:-translate-y-2">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#7a9a8a] to-[#5a7a6a] rounded-2xl flex items-center justify-center transform group-hover:rotate-6 transition-transform">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">สินค้าคุณภาพ</h3>
-              <p className="text-white/70">คัดสรรสินค้าคุณภาพดีเยี่ยม รับประกันความพึงพอใจ</p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-3xl p-8 text-center hover:bg-white/10 transition-all duration-500 transform hover:-translate-y-2">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#BFB595] to-[#A6A08D] rounded-2xl flex items-center justify-center transform group-hover:rotate-6 transition-transform">
-                <svg className="w-10 h-10 text-[#403C2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">ราคาดีที่สุด</h3>
-              <p className="text-white/70">ราคาคุ้มค่า เปรียบเทียบได้ ไม่มีบวกเพิ่ม</p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-3xl p-8 text-center hover:bg-white/10 transition-all duration-500 transform hover:-translate-y-2">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#58594D] to-[#403C2A] rounded-2xl flex items-center justify-center transform group-hover:rotate-6 transition-transform border border-white/20">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">จัดส่งรวดเร็ว</h3>
-              <p className="text-white/70">ส่งไว ส่งฟรี ทั่วประเทศ พร้อมติดตามพัสดุ</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
-            <div className="text-center">
-              <p className="text-4xl md:text-5xl font-bold text-[#7a9a8a]">{products.length}+</p>
-              <p className="text-white/60 mt-2">สินค้า</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl md:text-5xl font-bold text-[#BFB595]">{categories.length}</p>
-              <p className="text-white/60 mt-2">หมวดหมู่</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl md:text-5xl font-bold text-[#7a9a8a]">24/7</p>
-              <p className="text-white/60 mt-2">ให้บริการ</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl md:text-5xl font-bold text-[#BFB595]">100%</p>
-              <p className="text-white/60 mt-2">รับประกัน</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* All Products Section - Fullscreen */}
-      <section ref={productsRef} id="products" className="min-h-screen bg-[#F5F3EF] px-4 sm:px-6 lg:px-8 py-16">
+    <div className="bg-[#F5F3EF] min-h-screen">
+      {/* All Products Section */}
+      <section ref={productsRef} id="products" className="px-4 sm:px-6 lg:px-8 py-16 pt-24">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-[#403C2A] mb-8 text-center">
             สินค้าทั้งหมด
           </h2>
-        
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${!selectedCategory ? 'bg-[#403C2A] text-white shadow-lg scale-105' : 'bg-white text-[#403C2A] border border-[#D9D5CB] hover:bg-[#EBE8E2]'}`}
-            >
-              ทั้งหมด
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === cat.name ? 'bg-[#403C2A] text-white shadow-lg scale-105' : 'bg-white text-[#403C2A] border border-[#D9D5CB] hover:bg-[#EBE8E2]'}`}
-              >
-                {cat.icon} {cat.name}
-              </button>
-            ))}
-          </div>
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -751,50 +544,6 @@ export default function Home() {
           )}
         </div>
       </section>
-
-      {/* Footer Section */}
-      <footer className="bg-[#2D2A1E] text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {/* Brand */}
-            <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                <div className="relative w-12 h-12">
-                  <Image src="/images/logo.svg" alt="Eddy Electronics" fill className="object-contain" />
-                </div>
-                <div>
-                  <span className="text-xl font-bold text-[#7a9a8a] italic">EDDY</span>
-                  <p className="text-xs text-[#BFB595] tracking-wider">ELECTRONICS</p>
-                </div>
-              </div>
-              <p className="text-white/60 text-sm">ร้านอิเล็กทรอนิกส์คุณภาพ สินค้าหลากหลาย ราคาดี</p>
-            </div>
-
-            {/* Quick Links */}
-            <div className="text-center">
-              <h4 className="font-semibold text-[#BFB595] mb-4">ลิงก์ด่วน</h4>
-              <div className="space-y-2">
-                <button onClick={() => scrollToSection(0)} className="block w-full text-white/70 hover:text-white transition-colors">หน้าแรก</button>
-                <button onClick={() => scrollToSection(1)} className="block w-full text-white/70 hover:text-white transition-colors">เกี่ยวกับเรา</button>
-                <button onClick={() => scrollToSection(2)} className="block w-full text-white/70 hover:text-white transition-colors">สินค้า</button>
-              </div>
-            </div>
-
-            {/* Contact */}
-            <div className="text-center md:text-right">
-              <h4 className="font-semibold text-[#BFB595] mb-4">ติดต่อเรา</h4>
-              <div className="space-y-2 text-white/70 text-sm">
-                <p>📧 contact@eddyelectronics.com</p>
-                <p>📱 Line: @eddyelectronics</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-white/10 mt-12 pt-8 text-center">
-            <p className="text-white/40 text-sm">© 2025 Eddy Electronics. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
 
       {/* Product Modal */}
       {selectedProduct && (
