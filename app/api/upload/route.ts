@@ -6,7 +6,9 @@ import path from 'path';
 // Route segment config - เพิ่ม body size limit เป็น 50MB สำหรับวิดีโอ
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // 60 seconds timeout
 
+// Vercel Blob requires BLOB_READ_WRITE_TOKEN env var
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
 // Allowed file types

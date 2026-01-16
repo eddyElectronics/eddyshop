@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { uploadFiles } from '@/lib/upload';
 
 interface Product {
   id: string;
@@ -102,31 +103,16 @@ export default function AdminPage() {
     e.preventDefault();
     
     let uploadedImages = [...formData.images];
-    let uploadedVideo = formData.video;
+    let uploadedVideo: string | undefined = formData.video || undefined;
     
     // อัพโหลดไฟล์วิดีโอใหม่ถ้ามี
     if (videoFile) {
       setUploadingVideo(true);
-      try {
-        const videoFormData = new FormData();
-        videoFormData.append('files', videoFile);
-        
-        const videoRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: videoFormData,
-        });
-        
-        if (videoRes.ok) {
-          const videoData = await videoRes.json();
-          uploadedVideo = videoData.paths[0];
-        } else {
-          const errorData = await videoRes.json();
-          alert(errorData.error || 'อัพโหลดวิดีโอไม่สำเร็จ');
-          setUploadingVideo(false);
-          return;
-        }
-      } catch (error) {
-        alert('เกิดข้อผิดพลาดในการอัพโหลดวิดีโอ');
+      const result = await uploadFiles([videoFile]);
+      if (result.success && result.paths.length > 0) {
+        uploadedVideo = result.paths[0];
+      } else {
+        alert(result.error || 'อัพโหลดวิดีโอไม่สำเร็จ');
         setUploadingVideo(false);
         return;
       }
@@ -136,28 +122,11 @@ export default function AdminPage() {
     // อัพโหลดไฟล์ภาพใหม่ถ้ามี
     if (imageFiles.length > 0) {
       setUploadingImages(true);
-      try {
-        const uploadFormData = new FormData();
-        imageFiles.forEach(file => {
-          uploadFormData.append('files', file);
-        });
-        
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData,
-        });
-        
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          uploadedImages = [...uploadedImages, ...uploadData.paths];
-        } else {
-          const errorData = await uploadRes.json();
-          alert(errorData.error || 'อัพโหลดรูปภาพไม่สำเร็จ');
-          setUploadingImages(false);
-          return;
-        }
-      } catch (error) {
-        alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+      const result = await uploadFiles(imageFiles);
+      if (result.success) {
+        uploadedImages = [...uploadedImages, ...result.paths];
+      } else {
+        alert(result.error || 'อัพโหลดรูปภาพไม่สำเร็จ');
         setUploadingImages(false);
         return;
       }
