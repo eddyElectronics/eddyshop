@@ -46,15 +46,23 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.productCode?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Filter and sort products: new items first, then old items, sold items last
+  const filteredProducts = products
+    .filter(product => {
+      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesSearch = !searchQuery || 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.productCode?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      // Sold items go to the end
+      if (a.sold && !b.sold) return 1;
+      if (!a.sold && b.sold) return -1;
+      // Sort by id (timestamp) descending - newer items first
+      return Number(b.id) - Number(a.id);
+    });
 
   // Navigation
   const scrollToSection = (ref: React.RefObject<HTMLElement | null>) => {
