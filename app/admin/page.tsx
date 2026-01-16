@@ -16,6 +16,7 @@ interface Product {
   stock?: number;
   featured: boolean;
   isUsed?: boolean;
+  sold?: boolean;
 }
 
 interface Category {
@@ -42,6 +43,7 @@ export default function AdminPage() {
     images: [] as string[],
     featured: false,
     isUsed: false,
+    sold: false,
   });
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -138,6 +140,7 @@ export default function AdminPage() {
       image: uploadedImages[0] || '/images/products/placeholder.jpg',
       featured: formData.featured,
       isUsed: formData.isUsed,
+      sold: formData.sold,
     };
     
     try {
@@ -187,6 +190,7 @@ export default function AdminPage() {
       images: productImages,
       featured: product.featured,
       isUsed: product.isUsed || false,
+      sold: product.sold || false,
     });
     setImageFiles([]);
     setShowForm(true);
@@ -220,6 +224,7 @@ export default function AdminPage() {
       images: [],
       featured: false,
       isUsed: false,
+      sold: false,
     });
     setImageFiles([]);
   };
@@ -517,6 +522,19 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
+                      id="sold"
+                      checked={formData.sold}
+                      onChange={(e) => setFormData({ ...formData, sold: e.target.checked })}
+                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                    />
+                    <label htmlFor="sold" className="text-sm text-zinc-700 dark:text-zinc-300">
+                      ขายแล้ว
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
                       id="isUsed"
                       checked={formData.isUsed}
                       onChange={(e) => setFormData({ ...formData, isUsed: e.target.checked })}
@@ -586,6 +604,9 @@ export default function AdminPage() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
                     สถานะ
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-white">
+                    ขายแล้ว
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-zinc-900 dark:text-white">
                     จัดการ
@@ -659,6 +680,17 @@ export default function AdminPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
+                      {product.sold ? (
+                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded text-xs">
+                          ขายแล้ว
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs">
+                          มีสินค้า
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/products/${product.id}`}
@@ -726,6 +758,11 @@ export default function AdminPage() {
                           <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">
                             {product.productCode || '-'}
                           </span>
+                          {product.sold && (
+                            <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded text-[10px]">
+                              ขายแล้ว
+                            </span>
+                          )}
                           {product.featured && (
                             <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-[10px]">
                               แนะนำ

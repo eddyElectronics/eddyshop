@@ -45,9 +45,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   const imageUrl = getFirstImage(product);
   const imageCount = product.images?.length || (product.image ? 1 : 0);
 
+  const isSold = product.sold === true;
+
   return (
     <Link href={`/products/${product.id}`}>
-      <div className="group bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-zinc-100 dark:border-zinc-800">
+      <div className={`group bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-zinc-100 dark:border-zinc-800 ${isSold ? 'grayscale opacity-70' : ''}`}>
         <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800">
           <Image
             src={imageUrl}
@@ -64,7 +66,12 @@ export default function ProductCard({ product }: ProductCardProps) {
               {imageCount}
             </span>
           )}
-          {product.isUsed && (
+          {isSold && (
+            <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10">
+              ขายแล้ว
+            </span>
+          )}
+          {!isSold && product.isUsed && (
             <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
               มือสอง
             </span>
@@ -96,15 +103,23 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
               {formatPrice(product.price)}
             </span>
-            <button
-              onClick={handleAddToCart}
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              title="เพิ่มลงตะกร้า"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </button>
+            {isSold ? (
+              <span className="p-2 bg-zinc-400 text-white rounded-lg cursor-not-allowed" title="สินค้าขายแล้ว">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </span>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="เพิ่มลงตะกร้า"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

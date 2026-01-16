@@ -13,6 +13,7 @@ export interface Product {
   stock?: number;  // optional - ไม่บังคับ
   featured: boolean;
   isUsed?: boolean;  // true = มือสอง, false/undefined = ของใหม่
+  sold?: boolean;  // true = ขายแล้ว
 }
 
 // Helper function เพื่อดึงรูปทั้งหมดของสินค้า
