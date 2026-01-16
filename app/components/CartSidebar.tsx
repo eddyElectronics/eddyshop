@@ -2,6 +2,7 @@
 
 import { useCart } from '@/lib/cart-context';
 import Image from 'next/image';
+import { useState } from 'react';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -17,7 +18,8 @@ function formatPrice(price: number): string {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
+  const { items, removeItem, totalPrice, clearCart } = useCart();
+  const [showOrderPopup, setShowOrderPopup] = useState(false);
 
   if (!isOpen) return null;
 
@@ -64,43 +66,29 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       src={item.images?.[0] || item.image || '/images/products/placeholder.jpg'}
                       alt={item.name}
                       fill
+                      sizes="80px"
                       className="object-cover rounded-lg"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-zinc-900 dark:text-white truncate">
+                    {item.productCode && (
+                      <span className="text-xs font-mono bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">
+                        {item.productCode}
+                      </span>
+                    )}
+                    <h3 className="font-medium text-zinc-900 dark:text-white truncate mt-1">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-zinc-500">{formatPrice(item.price)}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-7 h-7 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-7 h-7 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <p className="text-sm font-semibold text-blue-600 mt-1">{formatPrice(item.price)}</p>
                   </div>
-                  <div className="flex flex-col items-end justify-between">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-500 hover:text-red-600"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                    <span className="font-semibold text-blue-600">
-                      {formatPrice(item.price * item.quantity)}
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-500 hover:text-red-600 self-start"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>
@@ -122,26 +110,65 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 ล้างตะกร้า
               </button>
               <button
-                onClick={() => {
-                  // Generate LINE message with cart items
-                  const message = items.map(item => 
-                    `${item.productCode || ''} ${item.name} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`
-                  ).join('\n');
-                  const total = `\nรวม: ${formatPrice(totalPrice)}`;
-                  const lineUrl = `https://line.me/R/oaMessage/@eddyelectronics/?${encodeURIComponent('สนใจสั่งซื้อสินค้า:\n' + message + total)}`;
-                  window.open(lineUrl, '_blank');
-                }}
-                className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                onClick={() => setShowOrderPopup(true)}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                สั่งซื้อผ่าน LINE
+                สั่งซื้อ
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Order Popup */}
+      {showOrderPopup && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/70 z-[60]"
+            onClick={() => setShowOrderPopup(false)}
+          />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl z-[60] shadow-2xl p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.53 5.47 3.92 7.15l-.62 2.31c-.08.3.02.62.26.81.14.11.31.17.48.17.12 0 .24-.03.35-.08l2.86-1.33c.93.23 1.9.35 2.89.35 5.64 0 10-4.13 10-9.7S17.64 2 12 2z"/>
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
+                วิธีการสั่งซื้อ
+              </h3>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                สั่งซื้อแจ้งหมายเลขสินค้าหรือเซฟหน้าจอสินค้าแล้วส่งมาที่
+              </p>
+              <a 
+                href="https://m.me/airportthai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors mb-4"
+              >
+                m.me/airportthai
+              </a>
+              <div className="text-left bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4 mt-4">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-2">
+                  <span className="font-semibold">1.</span> ไม่มีบริการเก็บเงินปลายทาง
+                </p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  <span className="font-semibold">2.</span> ราคารวมค่าส่งแล้ว
+                </p>
+              </div>
+              <button
+                onClick={() => setShowOrderPopup(false)}
+                className="w-full mt-6 px-4 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors font-medium"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
