@@ -7,35 +7,14 @@ import { useCart } from '@/lib/cart-context';
 import CartSidebar from './CartSidebar';
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { totalItems } = useCart();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Dispatch custom event for SPA search
-      window.dispatchEvent(new CustomEvent('spa-search', { detail: searchQuery }));
-      setSearchQuery('');
-      setIsMenuOpen(false);
-    }
-  };
 
   const scrollToProducts = () => {
     const productsSection = document.getElementById('products');
     if (productsSection) {
       productsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
-  };
-
-  const scrollToCategories = () => {
-    const categoriesSection = document.getElementById('categories');
-    if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setIsMenuOpen(false);
   };
@@ -64,32 +43,6 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* Search Bar - Desktop */}
-            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <input
-                  type="text"
-                  placeholder="ค้นหาสินค้า..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </form>
-
             {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center gap-6">
               <button
@@ -97,12 +50,6 @@ export default function Header() {
                 className="text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
               >
                 สินค้าทั้งหมด
-              </button>
-              <button
-                onClick={scrollToCategories}
-                className="text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-              >
-                หมวดหมู่
               </button>
               {/* Cart Icon */}
               <button
@@ -171,27 +118,12 @@ export default function Header() {
           {/* Mobile Menu */}
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-zinc-100 dark:border-zinc-800">
-              <form onSubmit={handleSearch} className="mb-4">
-                <input
-                  type="text"
-                  placeholder="ค้นหาสินค้า..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </form>
               <nav className="flex flex-col gap-3">
                 <button
                   onClick={scrollToProducts}
                   className="text-left text-zinc-600 dark:text-zinc-300 hover:text-blue-600 font-medium"
                 >
                   สินค้าทั้งหมด
-                </button>
-                <button
-                  onClick={scrollToCategories}
-                  className="text-left text-zinc-600 dark:text-zinc-300 hover:text-blue-600 font-medium"
-                >
-                  หมวดหมู่
                 </button>
               </nav>
             </div>
