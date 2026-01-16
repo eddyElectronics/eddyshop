@@ -9,6 +9,20 @@ export const dynamic = 'force-dynamic';
 
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
+// Helper function to get the base URL
+function getBaseUrl(request: NextRequest): string {
+  // Try to get from headers first
+  const host = request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+  
+  // Fallback to environment variable or localhost
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
 // POST - อัพโหลดรูปภาพ
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const uploadedPaths: string[] = [];
+    const baseUrl = getBaseUrl(request);
 
     for (const file of files) {
       // ตรวจสอบขนาดไฟล์ (< 5MB)
@@ -61,7 +76,8 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(bytes);
         fs.writeFileSync(filePath, buffer);
         
-        uploadedPaths.push(`/images/products/${uniqueName}`);
+        // เก็บเป็น full URL แทน relative path เพื่อให้ใช้งานบน mobile ได้
+        uploadedPaths.push(`${baseUrl}/images/products/${uniqueName}`);
       }
     }
 
