@@ -102,11 +102,16 @@ export default function AdminCategoriesPage() {
       const res = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
       });
+      
       if (res.ok) {
         fetchCategories();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'ไม่สามารถลบหมวดหมู่ได้');
       }
     } catch (error) {
       console.error('Failed to delete category:', error);
+      alert('เกิดข้อผิดพลาดในการลบหมวดหมู่');
     }
   };
 
