@@ -49,6 +49,34 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // Log visitor on page load
+  useEffect(() => {
+    async function logVisit() {
+      try {
+        // Generate or get session ID from localStorage
+        let sessionId = localStorage.getItem('visitor_session_id');
+        if (!sessionId) {
+          sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          localStorage.setItem('visitor_session_id', sessionId);
+        }
+
+        await fetch('/api/visitor-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pageUrl: window.location.pathname,
+            referrer: document.referrer || null,
+            sessionId,
+          }),
+        });
+      } catch (error) {
+        // Silently fail - don't impact user experience
+        console.debug('Failed to log visit:', error);
+      }
+    }
+    logVisit();
+  }, []);
+
   // Listen for SPA search events from Header
   useEffect(() => {
     const handleSpaSearch = (e: CustomEvent<string>) => {

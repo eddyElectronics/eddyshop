@@ -44,3 +44,19 @@ export interface DbCategory {
   created_at: string;
   updated_at: string;
 }
+
+// Visitor log type
+export interface DbVisitorLog {
+  id: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  referrer: string | null;
+  page_url: string;
+  country: string | null;
+  city: string | null;
+  device_type: string | null;
+  browser: string | null;
+  os: string | null;
+  session_id: string | null;
+  visited_at: string;
+}

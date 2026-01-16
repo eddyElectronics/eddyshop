@@ -1,4 +1,4 @@
-import { supabase, DbProduct, DbCategory } from './supabase';
+import { supabase, DbProduct, DbCategory, DbVisitorLog } from './supabase';
 import { Product } from './products';
 import { Category } from './categories';
 
@@ -394,5 +394,222 @@ export async function deleteCategory(id: string): Promise<boolean> {
   } catch (error) {
     console.error('deleteCategory error:', error);
     return false;
+  }
+}
+
+// ===== VISITOR LOGS =====
+
+export interface VisitorLog {
+  id: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  referrer: string | null;
+  pageUrl: string;
+  country: string | null;
+  city: string | null;
+  deviceType: string | null;
+  browser: string | null;
+  os: string | null;
+  sessionId: string | null;
+  visitedAt: string;
+}
+
+// Helper to convert DB visitor log to app visitor log
+function dbToVisitorLog(db: DbVisitorLog): VisitorLog {
+  return {
+    id: db.id,
+    ipAddress: db.ip_address,
+    userAgent: db.user_agent,
+    referrer: db.referrer,
+    pageUrl: db.page_url,
+    country: db.country,
+    city: db.city,
+    deviceType: db.device_type,
+    browser: db.browser,
+    os: db.os,
+    sessionId: db.session_id,
+    visitedAt: db.visited_at,
+  };
+}
+
+export async function addVisitorLog(log: Omit<VisitorLog, 'id' | 'visitedAt'>): Promise<VisitorLog | null> {
+  if (!hasSupabase) {
+    console.error('Supabase not configured');
+    return null;
+  }
+
+  try {
+    const dbLog = {
+      ip_address: log.ipAddress,
+      user_agent: log.userAgent,
+      referrer: log.referrer,
+      page_url: log.pageUrl,
+      country: log.country,
+      city: log.city,
+      device_type: log.deviceType,
+      browser: log.browser,
+      os: log.os,
+      session_id: log.sessionId,
+    };
+
+    const { data, error } = await supabase!
+      .from('visitor_logs')
+      .insert(dbLog)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase addVisitorLog error:', error);
+      return null;
+    }
+
+    return data ? dbToVisitorLog(data) : null;
+  } catch (error) {
+    console.error('addVisitorLog error:', error);
+    return null;
+  }
+}
+
+export async function getVisitorLogs(options?: {
+  limit?: number;
+  offset?: number;
+  startDate?: string;
+  endDate?: string;
+}): Promise<{ logs: VisitorLog[]; total: number }> {
+  if (!hasSupabase) {
+    console.error('Supabase not configured');
+    return { logs: [], total: 0 };
+  }
+
+  try {
+    let query = supabase!
+      .from('visitor_logs')
+      .select('*', { count: 'exact' })
+      .order('visited_at', { ascending: false });
+
+    if (options?.startDate) {
+      query = query.gte('visited_at', options.startDate);
+    }
+    if (options?.endDate) {
+      query = query.lte('visited_at', options.endDate);
+    }
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 50) - 1);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Supabase getVisitorLogs error:', error);
+      return { logs: [], total: 0 };
+    }
+
+    return {
+      logs: data ? data.map(dbToVisitorLog) : [],
+      total: count || 0,
+    };
+  } catch (error) {
+    console.error('getVisitorLogs error:', error);
+    return { logs: [], total: 0 };
+  }
+}
+
+export async function getVisitorStats(): Promise<{
+  totalVisits: number;
+  todayVisits: number;
+  uniqueVisitors: number;
+  topPages: { pageUrl: string; count: number }[];
+  deviceStats: { deviceType: string; count: number }[];
+  browserStats: { browser: string; count: number }[];
+}> {
+  if (!hasSupabase) {
+    console.error('Supabase not configured');
+    return {
+      totalVisits: 0,
+      todayVisits: 0,
+      uniqueVisitors: 0,
+      topPages: [],
+      deviceStats: [],
+      browserStats: [],
+    };
+  }
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString();
+
+    // Get total visits
+    const { count: totalVisits } = await supabase!
+      .from('visitor_logs')
+      .select('*', { count: 'exact', head: true });
+
+    // Get today's visits
+    const { count: todayVisits } = await supabase!
+      .from('visitor_logs')
+      .select('*', { count: 'exact', head: true })
+      .gte('visited_at', todayStr);
+
+    // Get all logs for aggregation
+    const { data: allLogs } = await supabase!
+      .from('visitor_logs')
+      .select('ip_address, page_url, device_type, browser');
+
+    // Calculate unique visitors by IP
+    const uniqueIps = new Set(allLogs?.map(l => l.ip_address).filter(Boolean));
+    
+    // Calculate top pages
+    const pageCounts: Record<string, number> = {};
+    allLogs?.forEach(l => {
+      if (l.page_url) {
+        pageCounts[l.page_url] = (pageCounts[l.page_url] || 0) + 1;
+      }
+    });
+    const topPages = Object.entries(pageCounts)
+      .map(([pageUrl, count]) => ({ pageUrl, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Calculate device stats
+    const deviceCounts: Record<string, number> = {};
+    allLogs?.forEach(l => {
+      const device = l.device_type || 'Unknown';
+      deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+    });
+    const deviceStats = Object.entries(deviceCounts)
+      .map(([deviceType, count]) => ({ deviceType, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Calculate browser stats
+    const browserCounts: Record<string, number> = {};
+    allLogs?.forEach(l => {
+      const browser = l.browser || 'Unknown';
+      browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+    });
+    const browserStats = Object.entries(browserCounts)
+      .map(([browser, count]) => ({ browser, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalVisits: totalVisits || 0,
+      todayVisits: todayVisits || 0,
+      uniqueVisitors: uniqueIps.size,
+      topPages,
+      deviceStats,
+      browserStats,
+    };
+  } catch (error) {
+    console.error('getVisitorStats error:', error);
+    return {
+      totalVisits: 0,
+      todayVisits: 0,
+      uniqueVisitors: 0,
+      topPages: [],
+      deviceStats: [],
+      browserStats: [],
+    };
   }
 }
