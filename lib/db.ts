@@ -10,7 +10,7 @@ const CATEGORIES_BLOB = 'data/categories.json';
 // Check if running on Vercel
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
-// In-memory cache
+// In-memory cache (only for development - not reliable in serverless production)
 let productsCache: Product[] | null = null;
 let categoriesCache: Category[] | null = null;
 
@@ -56,16 +56,11 @@ async function writeBlobJson<T>(blobName: string, data: T): Promise<void> {
 // ===== PRODUCTS =====
 
 export async function getProducts(): Promise<Product[]> {
-  // Return from cache if available
-  if (productsCache !== null) {
-    return productsCache;
-  }
-  
+  // In production, always read fresh from Blob (serverless has multiple instances)
   if (isProduction) {
     // Try to read from Blob
     const products = await readBlobJson<Product[]>(PRODUCTS_BLOB);
     if (products) {
-      productsCache = products;
       return products;
     }
     
@@ -74,7 +69,6 @@ export async function getProducts(): Promise<Product[]> {
       const filePath = path.join(process.cwd(), 'data', 'products.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
       const localProducts = JSON.parse(fileContents) as Product[];
-      productsCache = localProducts;
       
       // Initialize blob with local data
       await writeBlobJson(PRODUCTS_BLOB, localProducts);
@@ -84,7 +78,10 @@ export async function getProducts(): Promise<Product[]> {
       return [];
     }
   } else {
-    // Development - use JSON file
+    // Development - use JSON file with cache
+    if (productsCache !== null) {
+      return productsCache;
+    }
     try {
       const filePath = path.join(process.cwd(), 'data', 'products.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
@@ -157,16 +154,11 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ===== CATEGORIES =====
 
 export async function getCategories(): Promise<Category[]> {
-  // Return from cache if available
-  if (categoriesCache !== null) {
-    return categoriesCache;
-  }
-  
+  // In production, always read fresh from Blob (serverless has multiple instances)
   if (isProduction) {
     // Try to read from Blob
     const categories = await readBlobJson<Category[]>(CATEGORIES_BLOB);
     if (categories) {
-      categoriesCache = categories;
       return categories;
     }
     
@@ -175,7 +167,6 @@ export async function getCategories(): Promise<Category[]> {
       const filePath = path.join(process.cwd(), 'data', 'categories.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
       const localCategories = JSON.parse(fileContents) as Category[];
-      categoriesCache = localCategories;
       
       // Initialize blob with local data
       await writeBlobJson(CATEGORIES_BLOB, localCategories);
@@ -185,7 +176,10 @@ export async function getCategories(): Promise<Category[]> {
       return [];
     }
   } else {
-    // Development - use JSON file
+    // Development - use JSON file with cache
+    if (categoriesCache !== null) {
+      return categoriesCache;
+    }
     try {
       const filePath = path.join(process.cwd(), 'data', 'categories.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
