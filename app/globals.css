@@ -14,6 +14,51 @@
   --accent: #403C2A;
 }
 
+/* Full-screen SPA Styles */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Slow bounce animation for hero */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Section snap for fullscreen sections */
+section {
+  scroll-snap-align: start;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
