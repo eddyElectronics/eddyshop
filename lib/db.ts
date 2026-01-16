@@ -7,8 +7,8 @@ import path from 'path';
 // Check if running in development (local)
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Check if Supabase is configured
-const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Check if Supabase is configured and client is available
+const hasSupabase = !!supabase;
 
 // Helper to convert DB product to app product
 function dbToProduct(db: DbProduct): Product {

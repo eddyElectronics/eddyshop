@@ -1,77 +1,38 @@
 [
   {
     "id": "1768459205252",
-    "productCode": "AAA",
-    "name": "aaa",
-    "description": "aaaa",
-    "price": 100,
+    "productCode": "001",
+    "name": "วิทยุสื่อสาร Motorola",
+    "description": "วิทยุสื่อสารคุณภาพสูง ใช้งานง่าย",
+    "price": 2500,
     "category": "โมบาย",
-    "image": "/images/products/1768459205158-1qe4u6.png",
-    "images": [
-      "/images/products/1768459205158-1qe4u6.png",
-      "/images/products/1768459220261-a6guqd.png",
-      "/images/products/1768459220265-34nk4u.png"
-    ],
-    "featured": false,
-    "isUsed": true
+    "image": "https://placehold.co/400x400/3b82f6/white?text=Radio",
+    "images": [],
+    "featured": true,
+    "isUsed": false
   },
   {
     "id": "1768459425124",
-    "productCode": "SSS",
-    "name": "dddd",
-    "description": "fsfsdf",
-    "price": 100,
+    "productCode": "002",
+    "name": "iPhone 14 Pro Max",
+    "description": "สภาพดี มีประกัน",
+    "price": 35000,
     "category": "มือถือ",
-    "image": "/images/products/1768459425096-i3dxts.png",
-    "images": [
-      "/images/products/1768459425096-i3dxts.png"
-    ],
-    "featured": false,
+    "image": "https://placehold.co/400x400/10b981/white?text=iPhone",
+    "images": [],
+    "featured": true,
     "isUsed": true
   },
   {
     "id": "1768461651339",
-    "productCode": "กดห",
-    "name": "ดหกดกหด",
-    "description": "ดหกดห",
-    "price": 100,
+    "productCode": "003",
+    "name": "สายชาร์จ USB-C",
+    "description": "สายชาร์จคุณภาพสูง รองรับ Fast Charge",
+    "price": 350,
     "category": "อุปกรณ์",
-    "image": "/images/products/1768461651305-soigmc.png",
-    "images": [
-      "/images/products/1768461651305-soigmc.png"
-    ],
+    "image": "https://placehold.co/400x400/f59e0b/white?text=Cable",
+    "images": [],
     "featured": false,
-    "isUsed": false,
-    "sold": true
-  },
-  {
-    "id": "1768470601714",
-    "productCode": "EEE",
-    "name": "eee",
-    "description": "eeee",
-    "price": 100,
-    "category": "มือถือ",
-    "image": "/images/products/1768470601688-qkgebg.jpg",
-    "images": [
-      "/images/products/1768470601688-qkgebg.jpg"
-    ],
-    "featured": false,
-    "isUsed": true
-  },
-  {
-    "id": "1768528610030",
-    "productCode": "555",
-    "name": "666",
-    "description": "777",
-    "price": 888,
-    "category": "โมบาย",
-    "image": "/images/products/1768528609992-as6sd7.jpg",
-    "images": [
-      "/images/products/1768528609992-as6sd7.jpg",
-      "/images/products/1768529254315-r1arab.png"
-    ],
-    "featured": false,
-    "isUsed": true,
-    "sold": false
+    "isUsed": false
   }
 ]

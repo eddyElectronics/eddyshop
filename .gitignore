@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
-.env*.local
+#.env*.local
 
 # data files (managed by Vercel Blob in production)
 # data/products.json
