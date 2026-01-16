@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       stock: body.stock !== undefined ? Number(body.stock) : undefined,
       featured: body.featured || false,
       isUsed: body.isUsed || false,
+      sold: body.sold || false,
     };
     
     await addProduct(newProduct);
