@@ -10,6 +10,13 @@ const CATEGORIES_BLOB = 'categories.json';
 // Check if running on Vercel
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
+// Check if Blob token is available
+const hasBlobToken = !!process.env.BLOB_READ_WRITE_TOKEN;
+
+// In-memory cache for production (since we can't write to blob without token)
+let productsCacheProduction: Product[] | null = null;
+let categoriesCacheProduction: Category[] | null = null;
+
 // In-memory cache (only for development - not reliable in serverless production)
 let productsCache: Product[] | null = null;
 let categoriesCache: Category[] | null = null;
@@ -17,6 +24,11 @@ let categoriesCache: Category[] | null = null;
 // ===== BLOB HELPERS =====
 
 async function readBlobJson<T>(blobName: string): Promise<T | null> {
+  if (!hasBlobToken) {
+    console.log(`No BLOB_READ_WRITE_TOKEN, skipping blob read for ${blobName}`);
+    return null;
+  }
+  
   try {
     console.log(`Reading blob: ${blobName}`);
     const { blobs } = await list();
@@ -42,7 +54,12 @@ async function readBlobJson<T>(blobName: string): Promise<T | null> {
   }
 }
 
-async function writeBlobJson<T>(blobName: string, data: T): Promise<void> {
+async function writeBlobJson<T>(blobName: string, data: T): Promise<boolean> {
+  if (!hasBlobToken) {
+    console.log(`No BLOB_READ_WRITE_TOKEN, skipping blob write for ${blobName}`);
+    return false;
+  }
+  
   console.log(`Writing blob: ${blobName}`);
   
   try {
@@ -65,21 +82,30 @@ async function writeBlobJson<T>(blobName: string, data: T): Promise<void> {
       addRandomSuffix: false,
     });
     console.log(`Successfully wrote blob: ${blobName}, url: ${result.url}`);
+    return true;
   } catch (error) {
     console.error(`Write blob ${blobName} error:`, error);
-    throw error;
+    return false;
   }
 }
 
 // ===== PRODUCTS =====
 
 export async function getProducts(): Promise<Product[]> {
-  // In production, always read fresh from Blob (serverless has multiple instances)
+  // In production
   if (isProduction) {
-    // Try to read from Blob
-    const products = await readBlobJson<Product[]>(PRODUCTS_BLOB);
-    if (products) {
-      return products;
+    // If we have blob token, try to read from Blob
+    if (hasBlobToken) {
+      const products = await readBlobJson<Product[]>(PRODUCTS_BLOB);
+      if (products) {
+        productsCacheProduction = products;
+        return products;
+      }
+    }
+    
+    // If we have cache (from previous save in this instance), use it
+    if (productsCacheProduction !== null) {
+      return productsCacheProduction;
     }
     
     // Fallback to JSON file (for initial data)
@@ -88,9 +114,12 @@ export async function getProducts(): Promise<Product[]> {
       const fileContents = fs.readFileSync(filePath, 'utf8');
       const localProducts = JSON.parse(fileContents) as Product[];
       
-      // Initialize blob with local data
-      await writeBlobJson(PRODUCTS_BLOB, localProducts);
+      // Try to initialize blob with local data
+      if (hasBlobToken) {
+        await writeBlobJson(PRODUCTS_BLOB, localProducts);
+      }
       
+      productsCacheProduction = localProducts;
       return localProducts;
     } catch {
       return [];
@@ -114,12 +143,20 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function saveProducts(products: Product[]): Promise<void> {
-  // Update cache
+  // Update both caches
   productsCache = products;
+  productsCacheProduction = products;
   
   if (isProduction) {
-    // Save to Blob
-    await writeBlobJson(PRODUCTS_BLOB, products);
+    // Try to save to Blob if token available
+    if (hasBlobToken) {
+      const success = await writeBlobJson(PRODUCTS_BLOB, products);
+      if (!success) {
+        console.log('Blob save failed, using in-memory cache only');
+      }
+    } else {
+      console.log('No BLOB_READ_WRITE_TOKEN, using in-memory cache only');
+    }
   } else {
     // Development - save to JSON file
     try {
@@ -172,12 +209,20 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ===== CATEGORIES =====
 
 export async function getCategories(): Promise<Category[]> {
-  // In production, always read fresh from Blob (serverless has multiple instances)
+  // In production
   if (isProduction) {
-    // Try to read from Blob
-    const categories = await readBlobJson<Category[]>(CATEGORIES_BLOB);
-    if (categories) {
-      return categories;
+    // If we have blob token, try to read from Blob
+    if (hasBlobToken) {
+      const categories = await readBlobJson<Category[]>(CATEGORIES_BLOB);
+      if (categories) {
+        categoriesCacheProduction = categories;
+        return categories;
+      }
+    }
+    
+    // If we have cache (from previous save in this instance), use it
+    if (categoriesCacheProduction !== null) {
+      return categoriesCacheProduction;
     }
     
     // Fallback to JSON file (for initial data)
@@ -186,9 +231,12 @@ export async function getCategories(): Promise<Category[]> {
       const fileContents = fs.readFileSync(filePath, 'utf8');
       const localCategories = JSON.parse(fileContents) as Category[];
       
-      // Initialize blob with local data
-      await writeBlobJson(CATEGORIES_BLOB, localCategories);
+      // Try to initialize blob with local data
+      if (hasBlobToken) {
+        await writeBlobJson(CATEGORIES_BLOB, localCategories);
+      }
       
+      categoriesCacheProduction = localCategories;
       return localCategories;
     } catch {
       return [];
@@ -213,18 +261,23 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function saveCategories(categories: Category[]): Promise<void> {
   console.log('saveCategories called, count:', categories.length);
-  // Update cache
+  
+  // Update both caches
   categoriesCache = categories;
+  categoriesCacheProduction = categories;
   
   if (isProduction) {
-    // Save to Blob
-    console.log('Saving to Blob...');
-    try {
-      await writeBlobJson(CATEGORIES_BLOB, categories);
-      console.log('Saved to Blob successfully');
-    } catch (error) {
-      console.error('Failed to save to Blob:', error);
-      throw error;
+    // Try to save to Blob if token available
+    if (hasBlobToken) {
+      console.log('Saving to Blob...');
+      const success = await writeBlobJson(CATEGORIES_BLOB, categories);
+      if (success) {
+        console.log('Saved to Blob successfully');
+      } else {
+        console.log('Blob save failed, using in-memory cache only');
+      }
+    } else {
+      console.log('No BLOB_READ_WRITE_TOKEN, using in-memory cache only');
     }
   } else {
     // Development - save to JSON file
