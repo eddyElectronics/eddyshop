@@ -46,6 +46,18 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // Listen for SPA search events from Header
+  useEffect(() => {
+    const handleSpaSearch = (e: CustomEvent<string>) => {
+      setSearchQuery(e.detail);
+      setSelectedCategory('');
+      productsRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.addEventListener('spa-search', handleSpaSearch as EventListener);
+    return () => window.removeEventListener('spa-search', handleSpaSearch as EventListener);
+  }, []);
+
   // Filter and sort products: new items first, then old items, sold items last
   const filteredProducts = products
     .filter(product => {
@@ -394,7 +406,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-20">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
           หมวดหมู่สินค้า
         </h2>
