@@ -69,8 +69,8 @@ function categoryToDb(category: Category): Partial<DbCategory> {
 // ===== PRODUCTS =====
 
 export async function getProducts(): Promise<Product[]> {
-  // In development without Supabase, use local JSON file
-  if (isDevelopment && !hasSupabase) {
+  // If no Supabase, use local JSON file
+  if (!hasSupabase) {
     try {
       const filePath = path.join(process.cwd(), 'data', 'products.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
@@ -308,8 +308,8 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ===== CATEGORIES =====
 
 export async function getCategories(): Promise<Category[]> {
-  // In development without Supabase, use local JSON file
-  if (isDevelopment && !hasSupabase) {
+  // If no Supabase, use local JSON file
+  if (!hasSupabase) {
     try {
       const filePath = path.join(process.cwd(), 'data', 'categories.json');
       const fileContents = fs.readFileSync(filePath, 'utf8');
