@@ -15,20 +15,6 @@ const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;  // 5MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
-// Helper function to get the base URL
-function getBaseUrl(request: NextRequest): string {
-  // Try to get from headers first
-  const host = request.headers.get('host');
-  const protocol = request.headers.get('x-forwarded-proto') || 'http';
-  
-  if (host) {
-    return `${protocol}://${host}`;
-  }
-  
-  // Fallback to environment variable or localhost
-  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-}
-
 // POST - อัพโหลดรูปภาพและวิดีโอ
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +26,6 @@ export async function POST(request: NextRequest) {
     }
 
     const uploadedPaths: string[] = [];
-    const baseUrl = getBaseUrl(request);
 
     for (const file of files) {
       const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
@@ -91,8 +76,8 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(bytes);
         fs.writeFileSync(filePath, buffer);
         
-        // เก็บเป็น full URL แทน relative path เพื่อให้ใช้งานบน mobile ได้
-        uploadedPaths.push(`${baseUrl}/images/${folder}/${uniqueName}`);
+        // เก็บเป็น relative path เพื่อให้ใช้งานได้ทั้ง localhost และ production
+        uploadedPaths.push(`/images/${folder}/${uniqueName}`);
       }
     }
 
