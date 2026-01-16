@@ -76,16 +76,6 @@ export default function Home() {
       return Number(b.id) - Number(a.id);
     });
 
-  // Navigation
-  const scrollToSection = (ref: React.RefObject<HTMLElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleViewProducts = (category?: string) => {
-    if (category) setSelectedCategory(category);
-    setTimeout(() => scrollToSection(productsRef), 100);
-  };
-
   // Product Modal with Image Gallery
   const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -405,27 +395,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Categories Section */}
-      <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
-          หมวดหมู่สินค้า
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleViewProducts(category.name)}
-              className="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-zinc-100 dark:border-zinc-800"
-            >
-              <span className="text-4xl mb-2">{category.icon}</span>
-              <span className="font-medium text-zinc-900 dark:text-white">
-                {category.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* All Products Section */}
       <section ref={productsRef} id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-4">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">
