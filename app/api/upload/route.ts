@@ -3,6 +3,10 @@ import { put } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
 
+// Route segment config - เพิ่ม body size limit เป็น 10MB
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
 // POST - อัพโหลดรูปภาพ

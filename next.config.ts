@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // เพิ่ม body size limit สำหรับ upload รูปภาพ (10MB)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
