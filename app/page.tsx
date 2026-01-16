@@ -709,10 +709,9 @@ export default function Home() {
       {/* All Products Section - Fullscreen */}
       <section ref={productsRef} id="products" className="min-h-screen bg-[#F5F3EF] px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#403C2A] mb-2 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#403C2A] mb-8 text-center">
             สินค้าทั้งหมด
           </h2>
-          <p className="text-[#58594D] text-center mb-10">เลือกชมสินค้าที่คุณสนใจ</p>
         
           {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-2 mb-10">
