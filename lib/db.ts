@@ -1,13 +1,8 @@
 import { supabase, DbProduct, DbCategory } from './supabase';
 import { Product } from './products';
 import { Category } from './categories';
-import fs from 'fs';
-import path from 'path';
 
-// Check if running in development (local)
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-// Check if Supabase is configured and client is available
+// Check if Supabase is configured
 const hasSupabase = !!supabase;
 
 // Helper to convert DB product to app product
@@ -69,16 +64,9 @@ function categoryToDb(category: Category): Partial<DbCategory> {
 // ===== PRODUCTS =====
 
 export async function getProducts(): Promise<Product[]> {
-  // If no Supabase, use local JSON file
   if (!hasSupabase) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'products.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(fileContents) as Product[];
-    } catch (error) {
-      console.error('Read local products error:', error);
-      return [];
-    }
+    console.error('Supabase not configured');
+    return [];
   }
 
   try {
@@ -89,14 +77,7 @@ export async function getProducts(): Promise<Product[]> {
 
     if (error) {
       console.error('Supabase getProducts error:', error);
-      // Fallback to local JSON
-      try {
-        const filePath = path.join(process.cwd(), 'data', 'products.json');
-        const fileContents = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(fileContents) as Product[];
-      } catch {
-        return [];
-      }
+      return [];
     }
 
     return (data || []).map(dbToProduct);
@@ -107,23 +88,13 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function saveProducts(products: Product[]): Promise<void> {
-  // In development, also save to local JSON file
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'products.json');
-      fs.writeFileSync(filePath, JSON.stringify(products, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Save local products error:', error);
-    }
-  }
-
-  // Skip Supabase if not configured
   if (!hasSupabase) {
+    console.error('Supabase not configured');
     return;
   }
 
   try {
-    // Delete all and re-insert (simple approach for bulk save)
+    // Delete all and re-insert
     const { error: deleteError } = await supabase!
       .from('products')
       .delete()
@@ -150,8 +121,8 @@ export async function saveProducts(products: Product[]): Promise<void> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   if (!hasSupabase) {
-    const products = await getProducts();
-    return products.find(p => p.id === id) || null;
+    console.error('Supabase not configured');
+    return null;
   }
 
   try {
@@ -174,21 +145,8 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function addProduct(product: Product): Promise<Product> {
-  // Also save to local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'products.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const products = JSON.parse(fileContents) as Product[];
-      products.push(product);
-      fs.writeFileSync(filePath, JSON.stringify(products, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Save local product error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    return product;
+    throw new Error('Supabase not configured');
   }
 
   try {
@@ -212,26 +170,9 @@ export async function addProduct(product: Product): Promise<Product> {
 }
 
 export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-  // Also update local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'products.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const products = JSON.parse(fileContents) as Product[];
-      const index = products.findIndex(p => p.id === id);
-      if (index !== -1 && products[index]) {
-        products[index] = { ...products[index], ...updates, id };
-        fs.writeFileSync(filePath, JSON.stringify(products, null, 2), 'utf8');
-      }
-    } catch (error) {
-      console.error('Update local product error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    const products = await getProducts();
-    const product = products.find(p => p.id === id);
-    return product ? { ...product, ...updates, id } : null;
+    console.error('Supabase not configured');
+    return null;
   }
 
   try {
@@ -270,21 +211,9 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  // Also delete from local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'products.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const products = JSON.parse(fileContents) as Product[];
-      const filtered = products.filter(p => p.id !== id);
-      fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Delete local product error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    return true;
+    console.error('Supabase not configured');
+    return false;
   }
 
   try {
@@ -308,16 +237,9 @@ export async function deleteProduct(id: string): Promise<boolean> {
 // ===== CATEGORIES =====
 
 export async function getCategories(): Promise<Category[]> {
-  // If no Supabase, use local JSON file
   if (!hasSupabase) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'categories.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(fileContents) as Category[];
-    } catch (error) {
-      console.error('Read local categories error:', error);
-      return [];
-    }
+    console.error('Supabase not configured');
+    return [];
   }
 
   try {
@@ -328,14 +250,7 @@ export async function getCategories(): Promise<Category[]> {
 
     if (error) {
       console.error('Supabase getCategories error:', error);
-      // Fallback to local JSON
-      try {
-        const filePath = path.join(process.cwd(), 'data', 'categories.json');
-        const fileContents = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(fileContents) as Category[];
-      } catch {
-        return [];
-      }
+      return [];
     }
 
     return (data || []).map(dbToCategory);
@@ -346,18 +261,8 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
-  // In development, also save to local JSON file
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'categories.json');
-      fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Save local categories error:', error);
-    }
-  }
-
-  // Skip Supabase if not configured
   if (!hasSupabase) {
+    console.error('Supabase not configured');
     return;
   }
 
@@ -389,8 +294,8 @@ export async function saveCategories(categories: Category[]): Promise<void> {
 
 export async function getCategoryById(id: string): Promise<Category | null> {
   if (!hasSupabase) {
-    const categories = await getCategories();
-    return categories.find(c => c.id === id) || null;
+    console.error('Supabase not configured');
+    return null;
   }
 
   try {
@@ -415,21 +320,8 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 export async function addCategory(category: Category): Promise<Category> {
   console.log('addCategory called:', category);
 
-  // Also save to local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'categories.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const categories = JSON.parse(fileContents) as Category[];
-      categories.push(category);
-      fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Save local category error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    return category;
+    throw new Error('Supabase not configured');
   }
 
   try {
@@ -454,26 +346,9 @@ export async function addCategory(category: Category): Promise<Category> {
 }
 
 export async function updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
-  // Also update local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'categories.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const categories = JSON.parse(fileContents) as Category[];
-      const index = categories.findIndex(c => c.id === id);
-      if (index !== -1 && categories[index]) {
-        categories[index] = { ...categories[index], ...updates, id };
-        fs.writeFileSync(filePath, JSON.stringify(categories, null, 2), 'utf8');
-      }
-    } catch (error) {
-      console.error('Update local category error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    const categories = await getCategories();
-    const category = categories.find(c => c.id === id);
-    return category ? { ...category, ...updates, id } : null;
+    console.error('Supabase not configured');
+    return null;
   }
 
   try {
@@ -499,21 +374,9 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {
-  // Also delete from local JSON in development
-  if (isDevelopment) {
-    try {
-      const filePath = path.join(process.cwd(), 'data', 'categories.json');
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-      const categories = JSON.parse(fileContents) as Category[];
-      const filtered = categories.filter(c => c.id !== id);
-      fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Delete local category error:', error);
-    }
-  }
-
   if (!hasSupabase) {
-    return true;
+    console.error('Supabase not configured');
+    return false;
   }
 
   try {
