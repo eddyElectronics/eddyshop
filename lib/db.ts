@@ -212,12 +212,20 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
+  console.log('saveCategories called, count:', categories.length);
   // Update cache
   categoriesCache = categories;
   
   if (isProduction) {
     // Save to Blob
-    await writeBlobJson(CATEGORIES_BLOB, categories);
+    console.log('Saving to Blob...');
+    try {
+      await writeBlobJson(CATEGORIES_BLOB, categories);
+      console.log('Saved to Blob successfully');
+    } catch (error) {
+      console.error('Failed to save to Blob:', error);
+      throw error;
+    }
   } else {
     // Development - save to JSON file
     try {
@@ -235,10 +243,18 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 }
 
 export async function addCategory(category: Category): Promise<Category> {
-  const categories = await getCategories();
-  categories.push(category);
-  await saveCategories(categories);
-  return category;
+  console.log('addCategory called:', category);
+  try {
+    const categories = await getCategories();
+    console.log('Current categories count:', categories.length);
+    categories.push(category);
+    await saveCategories(categories);
+    console.log('Category saved successfully');
+    return category;
+  } catch (error) {
+    console.error('addCategory error:', error);
+    throw error;
+  }
 }
 
 export async function updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
