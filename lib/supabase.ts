@@ -1,0 +1,33 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Database types
+export interface DbProduct {
+  id: string;
+  product_code: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  images: string[];
+  stock: number | null;
+  featured: boolean;
+  is_used: boolean;
+  sold: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbCategory {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}

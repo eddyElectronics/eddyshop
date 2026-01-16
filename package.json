@@ -27,6 +27,7 @@
     "prepare": "echo 'Ready for production'"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
     "@vercel/blob": "^2.0.0",
     "@vercel/kv": "^3.0.0",
     "next": "16.1.2",
