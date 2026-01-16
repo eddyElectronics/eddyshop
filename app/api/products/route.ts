@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       category: body.category,
       image: images[0] || '/images/products/placeholder.jpg',
       images: images.length > 0 ? images : undefined,
+      video: body.video || undefined,
       stock: body.stock !== undefined ? Number(body.stock) : undefined,
       featured: body.featured || false,
       isUsed: body.isUsed || false,

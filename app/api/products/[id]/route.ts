@@ -66,6 +66,7 @@ export async function PUT(
       category: body.category ?? existingProduct.category,
       image: images ? images[0] : existingProduct.image,
       images: images ?? existingProduct.images,
+      video: body.video !== undefined ? body.video : existingProduct.video,
       stock: body.stock !== undefined ? Number(body.stock) : existingProduct.stock,
       featured: body.featured !== undefined ? body.featured : existingProduct.featured,
       isUsed: body.isUsed !== undefined ? body.isUsed : existingProduct.isUsed,

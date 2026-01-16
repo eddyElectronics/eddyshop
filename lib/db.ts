@@ -16,6 +16,7 @@ function dbToProduct(db: DbProduct): Product {
     category: db.category,
     image: db.image,
     images: db.images || [],
+    video: db.video ?? undefined,
     stock: db.stock ?? undefined,
     featured: db.featured,
     isUsed: db.is_used,
@@ -34,6 +35,7 @@ function productToDb(product: Product): Partial<DbProduct> {
     category: product.category,
     image: product.image || product.images?.[0] || '',
     images: product.images || [],
+    video: product.video ?? null,
     stock: product.stock ?? null,
     featured: product.featured,
     is_used: product.isUsed ?? false,
@@ -185,6 +187,7 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.image !== undefined) dbUpdates.image = updates.image;
     if (updates.images !== undefined) dbUpdates.images = updates.images;
+    if (updates.video !== undefined) dbUpdates.video = updates.video;
     if (updates.stock !== undefined) dbUpdates.stock = updates.stock;
     if (updates.featured !== undefined) dbUpdates.featured = updates.featured;
     if (updates.isUsed !== undefined) dbUpdates.is_used = updates.isUsed;

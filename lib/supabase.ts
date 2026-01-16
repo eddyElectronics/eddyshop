@@ -28,6 +28,7 @@ export interface DbProduct {
   category: string;
   image: string;
   images: string[];
+  video: string | null;  // วิดีโอสินค้า
   stock: number | null;
   featured: boolean;
   is_used: boolean;

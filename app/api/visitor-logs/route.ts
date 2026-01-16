@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     
     // Get IP address from headers (for proxied requests)
     const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0].trim() : 
+    const ip = forwarded ? (forwarded.split(',')[0] ?? 'unknown').trim() : 
                request.headers.get('x-real-ip') || 
                'unknown';
 

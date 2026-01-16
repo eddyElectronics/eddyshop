@@ -3,11 +3,17 @@ import { put } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
 
-// Route segment config - เพิ่ม body size limit เป็น 10MB
+// Route segment config - เพิ่ม body size limit เป็น 50MB สำหรับวิดีโอ
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+
+// Allowed file types
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;  // 5MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 // Helper function to get the base URL
 function getBaseUrl(request: NextRequest): string {
@@ -23,7 +29,7 @@ function getBaseUrl(request: NextRequest): string {
   return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 }
 
-// POST - อัพโหลดรูปภาพ
+// POST - อัพโหลดรูปภาพและวิดีโอ
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -37,20 +43,29 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl(request);
 
     for (const file of files) {
-      // ตรวจสอบขนาดไฟล์ (< 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: `ไฟล์ ${file.name} มีขนาดเกิน 5MB` }, { status: 400 });
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+      
+      // ตรวจสอบประเภทไฟล์
+      if (!isImage && !isVideo) {
+        return NextResponse.json({ 
+          error: `ไฟล์ ${file.name} ไม่ใช่ไฟล์ที่รองรับ (รองรับ: JPG, PNG, GIF, WebP, MP4, WebM, MOV)` 
+        }, { status: 400 });
       }
 
-      // ตรวจสอบประเภทไฟล์
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json({ error: `ไฟล์ ${file.name} ไม่ใช่รูปภาพที่รองรับ` }, { status: 400 });
+      // ตรวจสอบขนาดไฟล์ตามประเภท
+      const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+      const maxSizeText = isVideo ? '50MB' : '5MB';
+      if (file.size > maxSize) {
+        return NextResponse.json({ 
+          error: `ไฟล์ ${file.name} มีขนาดเกิน ${maxSizeText}` 
+        }, { status: 400 });
       }
 
       // สร้างชื่อไฟล์ unique
       const ext = file.name.split('.').pop();
       const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const folder = isVideo ? 'videos' : 'products';
 
       if (isProduction) {
         // Production - ใช้ Vercel Blob
@@ -58,13 +73,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
         }
         
-        const blob = await put(`products/${uniqueName}`, file, {
+        const blob = await put(`${folder}/${uniqueName}`, file, {
           access: 'public',
         });
         uploadedPaths.push(blob.url);
       } else {
         // Development - ใช้ local file system
-        const uploadDir = path.join(process.cwd(), 'public', 'images', 'products');
+        const uploadDir = path.join(process.cwd(), 'public', 'images', folder);
         
         // สร้างโฟลเดอร์ถ้ายังไม่มี
         if (!fs.existsSync(uploadDir)) {
@@ -77,7 +92,7 @@ export async function POST(request: NextRequest) {
         fs.writeFileSync(filePath, buffer);
         
         // เก็บเป็น full URL แทน relative path เพื่อให้ใช้งานบน mobile ได้
-        uploadedPaths.push(`${baseUrl}/images/products/${uniqueName}`);
+        uploadedPaths.push(`${baseUrl}/images/${folder}/${uniqueName}`);
       }
     }
 

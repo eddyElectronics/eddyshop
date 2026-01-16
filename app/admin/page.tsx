@@ -13,6 +13,7 @@ interface Product {
   category: string;
   image: string;
   images?: string[];
+  video?: string;
   stock?: number;
   featured: boolean;
   isUsed?: boolean;
@@ -41,12 +42,15 @@ export default function AdminPage() {
     price: '',
     category: '',
     images: [] as string[],
+    video: '',
     featured: false,
     isUsed: false,
     sold: false,
   });
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -98,6 +102,36 @@ export default function AdminPage() {
     e.preventDefault();
     
     let uploadedImages = [...formData.images];
+    let uploadedVideo = formData.video;
+    
+    // อัพโหลดไฟล์วิดีโอใหม่ถ้ามี
+    if (videoFile) {
+      setUploadingVideo(true);
+      try {
+        const videoFormData = new FormData();
+        videoFormData.append('files', videoFile);
+        
+        const videoRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: videoFormData,
+        });
+        
+        if (videoRes.ok) {
+          const videoData = await videoRes.json();
+          uploadedVideo = videoData.paths[0];
+        } else {
+          const errorData = await videoRes.json();
+          alert(errorData.error || 'อัพโหลดวิดีโอไม่สำเร็จ');
+          setUploadingVideo(false);
+          return;
+        }
+      } catch (error) {
+        alert('เกิดข้อผิดพลาดในการอัพโหลดวิดีโอ');
+        setUploadingVideo(false);
+        return;
+      }
+      setUploadingVideo(false);
+    }
     
     // อัพโหลดไฟล์ภาพใหม่ถ้ามี
     if (imageFiles.length > 0) {
@@ -138,6 +172,7 @@ export default function AdminPage() {
       category: formData.category,
       images: uploadedImages.length > 0 ? uploadedImages : undefined,
       image: uploadedImages[0] || '/images/products/placeholder.jpg',
+      video: uploadedVideo || undefined,
       featured: formData.featured,
       isUsed: formData.isUsed,
       sold: formData.sold,
@@ -188,11 +223,13 @@ export default function AdminPage() {
       price: product.price.toString(),
       category: product.category,
       images: productImages,
+      video: product.video || '',
       featured: product.featured,
       isUsed: product.isUsed || false,
       sold: product.sold || false,
     });
     setImageFiles([]);
+    setVideoFile(null);
     setShowForm(true);
   };
 
@@ -222,11 +259,13 @@ export default function AdminPage() {
       price: '',
       category: '',
       images: [],
+      video: '',
       featured: false,
       isUsed: false,
       sold: false,
     });
     setImageFiles([]);
+    setVideoFile(null);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,6 +298,33 @@ export default function AdminPage() {
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 50 * 1024 * 1024) {
+      alert(`ไฟล์ ${file.name} มีขนาดเกิน 50MB`);
+      return;
+    }
+    if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)) {
+      alert(`ไฟล์ ${file.name} ไม่ใช่วิดีโอที่รองรับ (MP4, WebM, MOV)`);
+      return;
+    }
+    
+    setVideoFile(file);
+  };
+
+  const removeVideoFile = () => {
+    setVideoFile(null);
+  };
+
+  const removeExistingVideo = () => {
+    setFormData(prev => ({
+      ...prev,
+      video: ''
     }));
   };
 
@@ -526,6 +592,78 @@ export default function AdminPage() {
                   </p>
                 </div>
 
+                {/* วิดีโอสินค้า */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    วิดีโอสินค้า (ไม่เกิน 50MB) - หากมีวิดีโอจะแสดงเป็นสื่อหลัก
+                  </label>
+                  
+                  {/* วิดีโอที่มีอยู่แล้ว */}
+                  {formData.video && !videoFile && (
+                    <div className="mb-3">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">วิดีโอปัจจุบัน:</p>
+                      <div className="relative inline-block group">
+                        <video
+                          src={formData.video}
+                          className="w-40 h-24 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={removeExistingVideo}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                        <span className="absolute bottom-0 left-0 right-0 bg-purple-600 text-white text-[10px] text-center py-0.5 rounded-b-lg">
+                          วิดีโอหลัก
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* วิดีโอที่เลือกใหม่ */}
+                  {videoFile && (
+                    <div className="mb-3">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">วิดีโอใหม่ที่จะอัพโหลด:</p>
+                      <div className="relative inline-block group">
+                        <video
+                          src={URL.createObjectURL(videoFile)}
+                          className="w-40 h-24 object-cover rounded-lg border-2 border-dashed border-purple-400"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={removeVideoFile}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                        <p className="text-xs text-zinc-500 mt-1">{videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* ปุ่มเลือกวิดีโอ */}
+                  {!formData.video && !videoFile && (
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
+                      <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400">คลิกเพื่อเลือกวิดีโอ</span>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    รองรับไฟล์ MP4, WebM, MOV (ไม่เกิน 50MB)
+                  </p>
+                </div>
+
                 {/* Checkboxes */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -573,16 +711,16 @@ export default function AdminPage() {
                     type="button"
                     onClick={resetForm}
                     className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    disabled={uploadingImages}
+                    disabled={uploadingImages || uploadingVideo}
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={uploadingImages}
+                    disabled={uploadingImages || uploadingVideo}
                   >
-                    {uploadingImages ? 'กำลังอัพโหลด...' : (editingProduct ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า')}
+                    {uploadingVideo ? 'กำลังอัพโหลดวิดีโอ...' : (uploadingImages ? 'กำลังอัพโหลดรูปภาพ...' : (editingProduct ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า'))}
                   </button>
                 </div>
               </form>

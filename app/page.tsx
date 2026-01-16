@@ -139,10 +139,20 @@ export default function Home() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
     
-    // Get all images
+    // Check if product has video
+    const hasVideo = product.video && product.video.length > 0;
+    
+    // Get all images (video is handled separately)
     const allImages = product.images && product.images.length > 0 
       ? product.images 
       : [product.image || '/images/products/placeholder.jpg'];
+    
+    // Total media count (video + images)
+    const totalMediaCount = (hasVideo ? 1 : 0) + allImages.length;
+    
+    // Current media is video if index is 0 and hasVideo
+    const isShowingVideo = hasVideo && currentIndex === 0;
+    const imageIndex = hasVideo ? currentIndex - 1 : currentIndex;
     
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -152,9 +162,9 @@ export default function Home() {
           onClose();
         }
       }
-      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
-      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
-    }, [isFullscreen, allImages.length, onClose]);
+      if (e.key === 'ArrowLeft') setCurrentIndex((prev) => (prev === 0 ? totalMediaCount - 1 : prev - 1));
+      if (e.key === 'ArrowRight') setCurrentIndex((prev) => (prev === totalMediaCount - 1 ? 0 : prev + 1));
+    }, [isFullscreen, totalMediaCount, onClose]);
 
     useEffect(() => {
       document.addEventListener('keydown', handleKeyDown);
@@ -165,8 +175,8 @@ export default function Home() {
       };
     }, [handleKeyDown]);
 
-    const goToPrev = () => setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
-    const goToNext = () => setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+    const goToPrev = () => setCurrentIndex((prev) => (prev === 0 ? totalMediaCount - 1 : prev - 1));
+    const goToNext = () => setCurrentIndex((prev) => (prev === totalMediaCount - 1 ? 0 : prev + 1));
     
     return (
       <>
@@ -185,7 +195,7 @@ export default function Home() {
               </svg>
             </button>
             
-            {allImages.length > 1 && (
+            {totalMediaCount > 1 && (
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); goToPrev(); }}
@@ -207,26 +217,52 @@ export default function Home() {
             )}
             
             <div className="relative w-full h-full max-w-5xl max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
-              <Image
-                src={allImages[currentIndex] || '/images/products/placeholder.jpg'}
-                alt={`${product.name} - รูปที่ ${currentIndex + 1}`}
-                fill
-                className="object-contain"
-                priority
-                sizes="100vw"
-              />
+              {isShowingVideo ? (
+                <video
+                  src={product.video}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <Image
+                  src={allImages[imageIndex] || '/images/products/placeholder.jpg'}
+                  alt={`${product.name} - รูปที่ ${imageIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="100vw"
+                />
+              )}
             </div>
             
-            {allImages.length > 1 && (
+            {totalMediaCount > 1 && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                <span className="text-white/80 text-sm">{currentIndex + 1} / {allImages.length}</span>
+                <span className="text-white/80 text-sm">{currentIndex + 1} / {totalMediaCount}</span>
                 <div className="flex gap-2">
+                  {/* Video thumbnail */}
+                  {hasVideo && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(0); }}
+                      className={`w-12 h-12 rounded overflow-hidden border-2 transition-all relative ${
+                        currentIndex === 0 ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <video src={product.video} className="object-cover w-full h-full" muted />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </button>
+                  )}
+                  {/* Image thumbnails */}
                   {allImages.map((img, idx) => (
                     <button
                       key={idx}
-                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(hasVideo ? idx + 1 : idx); }}
                       className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
-                        idx === currentIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+                        (hasVideo ? idx + 1 : idx) === currentIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
                       }`}
                     >
                       <Image src={img} alt={`รูป ${idx + 1}`} width={48} height={48} className="object-cover w-full h-full" />
@@ -241,16 +277,35 @@ export default function Home() {
         {/* Product Modal */}
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="relative aspect-video cursor-zoom-in" onClick={() => setIsFullscreen(true)}>
-              <Image
-                src={allImages[currentIndex] || '/images/products/placeholder.jpg'}
-                alt={product.name}
-                fill
-                className="object-cover rounded-t-2xl"
-              />
+            <div className="relative aspect-video cursor-zoom-in" onClick={() => !isShowingVideo && setIsFullscreen(true)}>
+              {isShowingVideo ? (
+                <video
+                  src={product.video}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-cover rounded-t-2xl"
+                />
+              ) : (
+                <Image
+                  src={allImages[imageIndex] || '/images/products/placeholder.jpg'}
+                  alt={product.name}
+                  fill
+                  className="object-cover rounded-t-2xl"
+                />
+              )}
+              
+              {/* Video badge */}
+              {isShowingVideo && (
+                <div className="absolute top-4 left-4 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  วิดีโอ
+                </div>
+              )}
               
               {/* Navigation Arrows */}
-              {allImages.length > 1 && (
+              {totalMediaCount > 1 && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); goToPrev(); }}
@@ -271,20 +326,22 @@ export default function Home() {
                 </>
               )}
               
-              {/* Image Counter */}
-              {allImages.length > 1 && (
+              {/* Media Counter */}
+              {totalMediaCount > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
-                  {currentIndex + 1} / {allImages.length}
+                  {currentIndex + 1} / {totalMediaCount}
                 </div>
               )}
               
-              {/* Fullscreen hint */}
-              <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                คลิกเพื่อขยาย
-              </div>
+              {/* Fullscreen hint (only for images) */}
+              {!isShowingVideo && (
+                <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  คลิกเพื่อขยาย
+                </div>
+              )}
               
               <button
                 onClick={onClose}
@@ -297,14 +354,31 @@ export default function Home() {
             </div>
             
             {/* Thumbnails */}
-            {allImages.length > 1 && (
+            {totalMediaCount > 1 && (
               <div className="flex gap-2 p-4 overflow-x-auto bg-zinc-50 dark:bg-zinc-800">
+                {/* Video thumbnail */}
+                {hasVideo && (
+                  <button
+                    onClick={() => setCurrentIndex(0)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
+                      currentIndex === 0 ? 'border-purple-600' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <video src={product.video} className="object-cover w-full h-full" muted />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </button>
+                )}
+                {/* Image thumbnails */}
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentIndex(idx)}
+                    onClick={() => setCurrentIndex(hasVideo ? idx + 1 : idx)}
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                      idx === currentIndex ? 'border-blue-600' : 'border-transparent opacity-60 hover:opacity-100'
+                      (hasVideo ? idx + 1 : idx) === currentIndex ? 'border-blue-600' : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
                     <Image src={img} alt={`รูป ${idx + 1}`} width={64} height={64} className="object-cover w-full h-full" />
@@ -363,6 +437,7 @@ export default function Home() {
 
   // Product Card (inline)
   const ProductCard = ({ product }: { product: Product }) => {
+    const hasVideo = product.video && product.video.length > 0;
     const imageUrl = product.images?.[0] || product.image || '/images/products/placeholder.jpg';
     const imageCount = product.images?.length || 1;
     const isSold = product.sold === true;
@@ -373,13 +448,34 @@ export default function Home() {
         className={`group cursor-pointer bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-lg transition-all border border-zinc-100 dark:border-zinc-800 overflow-hidden ${isSold ? 'grayscale opacity-70' : ''}`}
       >
         <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+          {hasVideo ? (
+            <video
+              src={product.video}
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+              muted
+              loop
+              playsInline
+              onMouseOver={(e) => e.currentTarget.play()}
+              onMouseOut={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+            />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )}
+          {/* Video badge */}
+          {hasVideo && (
+            <span className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              วิดีโอ
+            </span>
+          )}
           {imageCount > 1 && (
             <span className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
               📷 {imageCount}
