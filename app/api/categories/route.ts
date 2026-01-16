@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCategories, addCategory } from '@/lib/db';
 import { Category } from '@/lib/categories';
 
+// Force dynamic - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - ดึงหมวดหมู่ทั้งหมด
 export async function GET() {
   try {
@@ -36,6 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
     console.error('POST category error:', error);
-    return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to create category', details: errorMessage }, { status: 500 });
   }
 }

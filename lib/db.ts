@@ -37,16 +37,23 @@ async function readBlobJson<T>(blobName: string): Promise<T | null> {
 async function writeBlobJson<T>(blobName: string, data: T): Promise<void> {
   try {
     // Delete old blob first
-    const { blobs } = await list({ prefix: blobName });
-    for (const blob of blobs) {
-      await del(blob.url);
+    try {
+      const { blobs } = await list({ prefix: blobName });
+      for (const blob of blobs) {
+        await del(blob.url);
+      }
+    } catch (delError) {
+      console.warn(`Delete old blob ${blobName} warning:`, delError);
+      // Continue even if delete fails
     }
     
     // Write new blob
     await put(blobName, JSON.stringify(data, null, 2), {
       access: 'public',
       contentType: 'application/json',
+      addRandomSuffix: false,
     });
+    console.log(`Successfully wrote blob: ${blobName}`);
   } catch (error) {
     console.error(`Write blob ${blobName} error:`, error);
     throw error;
