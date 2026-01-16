@@ -92,12 +92,15 @@ export default function Home() {
           <div className="p-6">
             <div className="flex items-center gap-2 mb-2">
               {product.productCode && (
-                <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">
+                <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded font-semibold">
                   {product.productCode}
                 </span>
               )}
               <span className="text-sm text-zinc-500">{product.category}</span>
-              {product.isUsed && (
+              {product.sold && (
+                <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">ขายแล้ว</span>
+              )}
+              {!product.sold && product.isUsed && (
                 <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">มือสอง</span>
               )}
             </div>
@@ -105,18 +108,27 @@ export default function Home() {
             <p className="text-zinc-600 dark:text-zinc-400 mb-4">{product.description}</p>
             <div className="flex items-center justify-between">
               <span className="text-3xl font-bold text-blue-600">{formatPrice(product.price)}</span>
-              <button
-                onClick={() => {
-                  addItem(product);
-                  onClose();
-                }}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                เพิ่มลงตะกร้า
-              </button>
+              {product.sold ? (
+                <span className="flex items-center gap-2 px-6 py-3 bg-zinc-400 text-white rounded-full cursor-not-allowed">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  สินค้าขายแล้ว
+                </span>
+              ) : (
+                <button
+                  onClick={() => {
+                    addItem(product);
+                    onClose();
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  เพิ่มลงตะกร้า
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -128,11 +140,12 @@ export default function Home() {
   const ProductCard = ({ product }: { product: Product }) => {
     const imageUrl = product.images?.[0] || product.image || '/images/products/placeholder.jpg';
     const imageCount = product.images?.length || 1;
+    const isSold = product.sold === true;
 
     return (
       <div
         onClick={() => setSelectedProduct(product)}
-        className="group cursor-pointer bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-lg transition-all border border-zinc-100 dark:border-zinc-800 overflow-hidden"
+        className={`group cursor-pointer bg-white dark:bg-zinc-900 rounded-xl shadow-sm hover:shadow-lg transition-all border border-zinc-100 dark:border-zinc-800 overflow-hidden ${isSold ? 'grayscale opacity-70' : ''}`}
       >
         <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800">
           <Image
@@ -147,7 +160,12 @@ export default function Home() {
               📷 {imageCount}
             </span>
           )}
-          {product.isUsed && (
+          {isSold && (
+            <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10">
+              ขายแล้ว
+            </span>
+          )}
+          {!isSold && product.isUsed && (
             <span className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
               มือสอง
             </span>
@@ -161,7 +179,7 @@ export default function Home() {
         <div className="p-4">
           <div className="flex items-center gap-2 mb-1">
             {product.productCode && (
-              <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">
+              <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-zinc-600 dark:text-zinc-300 font-semibold">
                 {product.productCode}
               </span>
             )}
@@ -171,18 +189,26 @@ export default function Home() {
           <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{product.description}</p>
           <div className="flex items-center justify-between mt-3">
             <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                addItem(product);
-              }}
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              title="เพิ่มลงตะกร้า"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </button>
+            {isSold ? (
+              <span className="p-2 bg-zinc-400 text-white rounded-lg cursor-not-allowed" title="สินค้าขายแล้ว">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </span>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addItem(product);
+                }}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="เพิ่มลงตะกร้า"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

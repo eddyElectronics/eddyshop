@@ -1,6 +1,9 @@
-import { getProducts, searchProducts, getProductsByCategory } from '@/lib/products';
 import { getCategories } from '@/lib/categories';
+import { getProducts } from '@/lib/db';
 import ProductCard from '../components/ProductCard';
+
+// Use dynamic rendering since products are stored in Vercel Blob
+export const dynamic = 'force-dynamic';
 
 interface ProductsPageProps {
   searchParams: Promise<{ search?: string; category?: string }>;
@@ -11,13 +14,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const searchQuery = params.search;
   const categoryFilter = params.category;
 
-  let products = getProducts();
+  let products = await getProducts();
   const categories = getCategories();
 
   if (searchQuery) {
-    products = searchProducts(searchQuery);
+    const query = searchQuery.toLowerCase();
+    products = products.filter(
+      product =>
+        product.productCode?.toLowerCase().includes(query) ||
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query)
+    );
   } else if (categoryFilter) {
-    products = getProductsByCategory(categoryFilter);
+    products = products.filter(product => product.category === categoryFilter);
   }
 
   return (
