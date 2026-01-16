@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProductById, getProducts, saveProducts } from '@/lib/db';
 import { Product } from '@/lib/products';
 
+// Force dynamic - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - ดึงสินค้าตาม ID
 export async function GET(
   _request: NextRequest,
@@ -15,7 +19,12 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     
-    return NextResponse.json(product);
+    return NextResponse.json(product, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
   } catch (error) {
     console.error('GET product error:', error);
     return NextResponse.json({ error: 'Failed to read product' }, { status: 500 });

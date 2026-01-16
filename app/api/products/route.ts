@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProducts, addProduct } from '@/lib/db';
 import { Product } from '@/lib/products';
 
+// Force dynamic - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - ดึงสินค้าทั้งหมด
 export async function GET() {
   try {
     const products = await getProducts();
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
   } catch (error) {
     console.error('GET products error:', error);
     return NextResponse.json({ error: 'Failed to read products' }, { status: 500 });
