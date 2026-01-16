@@ -85,7 +85,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="p-4">
           <div className="flex items-center gap-2 mb-1">
             {product.productCode && (
-              <span className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 dark:text-zinc-400">
+              <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-zinc-600 dark:text-zinc-300 font-semibold">
                 {product.productCode}
               </span>
             )}

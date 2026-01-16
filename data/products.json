@@ -41,7 +41,8 @@
       "/images/products/1768461651305-soigmc.png"
     ],
     "featured": false,
-    "isUsed": true
+    "isUsed": true,
+    "sold": true
   },
   {
     "id": "1768470601714",
