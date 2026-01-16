@@ -3,11 +3,20 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Debug logging
+console.log('Supabase config check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseKey,
+  urlPrefix: supabaseUrl ? supabaseUrl.substring(0, 30) : 'none'
+});
+
 // Only create client if credentials are available
 export const supabase: SupabaseClient | null = 
   supabaseUrl && supabaseKey 
     ? createClient(supabaseUrl, supabaseKey) 
     : null;
+
+console.log('Supabase client created:', !!supabase);
 
 // Database types
 export interface DbProduct {
