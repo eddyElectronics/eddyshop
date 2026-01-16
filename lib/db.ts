@@ -82,7 +82,7 @@ export async function getProducts(): Promise<Product[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
@@ -124,7 +124,7 @@ export async function saveProducts(products: Product[]): Promise<void> {
 
   try {
     // Delete all and re-insert (simple approach for bulk save)
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabase!
       .from('products')
       .delete()
       .neq('id', '');
@@ -135,7 +135,7 @@ export async function saveProducts(products: Product[]): Promise<void> {
 
     if (products.length > 0) {
       const dbProducts = products.map(productToDb);
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('products')
         .insert(dbProducts);
 
@@ -155,7 +155,7 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('products')
       .select('*')
       .eq('id', id)
@@ -193,7 +193,7 @@ export async function addProduct(product: Product): Promise<Product> {
 
   try {
     const dbProduct = productToDb(product);
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('products')
       .insert(dbProduct)
       .select()
@@ -250,7 +250,7 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
     if (updates.sold !== undefined) dbUpdates.sold = updates.sold;
     dbUpdates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('products')
       .update(dbUpdates)
       .eq('id', id)
@@ -288,7 +288,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('products')
       .delete()
       .eq('id', id);
@@ -321,7 +321,7 @@ export async function getCategories(): Promise<Category[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('categories')
       .select('*')
       .order('created_at', { ascending: true });
@@ -363,7 +363,7 @@ export async function saveCategories(categories: Category[]): Promise<void> {
 
   try {
     // Delete all and re-insert
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabase!
       .from('categories')
       .delete()
       .neq('id', '');
@@ -374,7 +374,7 @@ export async function saveCategories(categories: Category[]): Promise<void> {
 
     if (categories.length > 0) {
       const dbCategories = categories.map(categoryToDb);
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('categories')
         .insert(dbCategories);
 
@@ -394,7 +394,7 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('categories')
       .select('*')
       .eq('id', id)
@@ -434,7 +434,7 @@ export async function addCategory(category: Category): Promise<Category> {
 
   try {
     const dbCategory = categoryToDb(category);
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('categories')
       .insert(dbCategory)
       .select()
@@ -479,7 +479,7 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
   try {
     const dbUpdates: Record<string, unknown> = { ...updates, updated_at: new Date().toISOString() };
     
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('categories')
       .update(dbUpdates)
       .eq('id', id)
@@ -517,7 +517,7 @@ export async function deleteCategory(id: string): Promise<boolean> {
   }
 
   try {
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('categories')
       .delete()
       .eq('id', id);
